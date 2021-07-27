@@ -4,6 +4,6 @@ variable "sftp_users" {
     public_key = string
   }))
   
-  default = []
+  default = {}
   description = "List of SFTP usernames and public keys"
 }

@@ -24,7 +24,7 @@ module "iam_policy_label" {
 
 resource "aws_transfer_server" "default" {
   identity_provider_type = "SERVICE_MANAGED"
-  protocols = "SFTP" # SFTP, FTPS, FTP
+  protocols = ["SFTP"] # SFTP, FTPS, FTP
   domain = "S3" # EFS, S3
   endpoint_type = "PUBLIC" # VPC, PUBLIC
   force_destroy = true
