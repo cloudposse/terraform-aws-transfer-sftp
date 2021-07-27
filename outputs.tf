@@ -5,5 +5,5 @@ output "id" {
 
 output "transfer_endpoint" {
   description = "The endpoint of the Transfer Server"
-  value = aws_transfer_server.default.endpoint
+  value       = aws_transfer_server.default.endpoint
 }

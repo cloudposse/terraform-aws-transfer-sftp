@@ -1,9 +1,9 @@
 variable "sftp_users" {
   type = map(object({
-    user_name = string,
+    user_name  = string,
     public_key = string
   }))
-  
-  default = {}
+
+  default     = {}
   description = "List of SFTP usernames and public keys"
 }

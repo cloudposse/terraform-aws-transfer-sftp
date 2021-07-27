@@ -1,22 +1,22 @@
 locals {
-  enabled             = module.this.enabled
+  enabled = module.this.enabled
 }
 
 module "iam_role_label" {
-  source   = "cloudposse/label/null"
-  version    = "0.24.1"
-  enabled    = local.enabled
-  
+  source  = "cloudposse/label/null"
+  version = "0.24.1"
+  enabled = local.enabled
+
   attributes = ["role"]
 
   context = module.this.context
 }
 
 module "iam_policy_label" {
-  source   = "cloudposse/label/null"
-  version    = "0.24.1"
-  enabled    = local.enabled
-  
+  source  = "cloudposse/label/null"
+  version = "0.24.1"
+  enabled = local.enabled
+
   attributes = ["policy"]
 
   context = module.this.context
@@ -24,10 +24,10 @@ module "iam_policy_label" {
 
 resource "aws_transfer_server" "default" {
   identity_provider_type = "SERVICE_MANAGED"
-  protocols = ["SFTP"] # SFTP, FTPS, FTP
-  domain = "S3" # EFS, S3
-  endpoint_type = "PUBLIC" # VPC, PUBLIC
-  force_destroy = true
+  protocols              = ["SFTP"] # SFTP, FTPS, FTP
+  domain                 = "S3"     # EFS, S3
+  endpoint_type          = "PUBLIC" # VPC, PUBLIC
+  force_destroy          = true
 
   tags = module.this.tags
 }
@@ -37,7 +37,7 @@ resource "aws_transfer_user" "default" {
 
   server_id = aws_transfer_server.default.id
   role      = aws_iam_role.default.arn
-  
+
   user_name = each.value.user_name
 
   tags = module.this.tags
@@ -47,7 +47,7 @@ resource "aws_transfer_ssh_key" "default" {
   for_each = var.sftp_users
 
   server_id = aws_transfer_server.default.id
-  
+
   user_name = each.value.user_name
   body      = each.value.public_key
 }
