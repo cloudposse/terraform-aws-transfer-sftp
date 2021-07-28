@@ -5,5 +5,5 @@ output "id" {
 
 output "transfer_endpoint" {
   description = "Endpoint for your SFTP connection"
-  value = module.example.transfer_endpoint 
+  value       = module.example.transfer_endpoint
 }
