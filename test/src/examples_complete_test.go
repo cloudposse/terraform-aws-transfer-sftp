@@ -1,8 +1,10 @@
 package test
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,8 +20,6 @@ func TestExamplesComplete(t *testing.T) {
 	randID := strconv.Itoa(rand.Intn(100000))
 	attributes := []string{randID}
 
-	exampleInput := "Hello, world!"
-
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
 		TerraformDir: "../../examples/complete",
@@ -30,7 +30,6 @@ func TestExamplesComplete(t *testing.T) {
 		// and AWS resources do not interfere with each other
 		Vars: map[string]interface{}{
 			"attributes": attributes,
-			"example":    exampleInput,
 		},
 	}
 	// At the end of the test, run `terraform destroy` to clean up any resources that were created
@@ -41,12 +40,15 @@ func TestExamplesComplete(t *testing.T) {
 
 	// Run `terraform output` to get the value of an output variable
 	id := terraform.Output(t, terraformOptions, "id")
-	example := terraform.Output(t, terraformOptions, "example")
-	random := terraform.Output(t, terraformOptions, "random")
+	transfer_endpoint := terraform.Output(t, terraformOptions, "transfer_endpoint")
 
 	// Verify we're getting back the outputs we expect
 	// Ensure we get a random number appended
-	assert.Equal(t, exampleInput+" "+random, example)
+	expectedTransferEndpoint := "server.transfer.us-east-2.amazonaws.com"
+	assert.True(t,
+		strings.HasSuffix(transfer_endpoint, expectedTransferEndpoint),
+		fmt.Sprintf("Transfer endpoint should end with %v", expectedTransferEndpoint))
+
 	// Ensure we get the attribute included in the ID
 	assert.Equal(t, "eg-ue2-test-example-"+randID, id)
 
@@ -61,23 +63,8 @@ func TestExamplesComplete(t *testing.T) {
 	terraform.Apply(t, terraformOptions)
 
 	id2 := terraform.Output(t, terraformOptions, "id")
-	example2 := terraform.Output(t, terraformOptions, "example")
-	random2 := terraform.Output(t, terraformOptions, "random")
+	transfer_endpoint2 := terraform.Output(t, terraformOptions, "transfer_endpoint")
 
 	assert.Equal(t, id, id2, "Expected `id` to be stable")
-	assert.Equal(t, example, example2, "Expected `example` to be stable")
-	assert.Equal(t, random, random2, "Expected `random` to be stable")
-
-	// Then we run change the example and run it a third time and
-	// verify that the random number changed
-	newExample := "Goodbye"
-	terraformOptions.Vars["example"] = newExample
-	terraform.Apply(t, terraformOptions)
-
-	example3 := terraform.Output(t, terraformOptions, "example")
-	random3 := terraform.Output(t, terraformOptions, "random")
-
-	assert.NotEqual(t, random, random3, "Expected `random` to change when `example` changed")
-	assert.Equal(t, newExample+" "+random3, example3, "Expected `example` to use new random number")
-
+	assert.Equal(t, transfer_endpoint, transfer_endpoint2, "Expected `transfer_endpoint` to be stable")
 }

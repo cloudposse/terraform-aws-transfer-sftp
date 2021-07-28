@@ -1,7 +1,13 @@
+provider "aws" {
+  region = var.region
+}
+
 module "example" {
   source = "../.."
 
-  example = var.example
+  region = var.region
+
+  sftp_users = var.sftp_users
 
   context = module.this.context
 }

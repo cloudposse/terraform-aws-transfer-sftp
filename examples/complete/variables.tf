@@ -1,4 +1,8 @@
-variable "example" {
+variable "region" {
+  type = string
+}
+
+variable "sftp_users" {
   type = map(object({
     user_name  = string,
     public_key = string
