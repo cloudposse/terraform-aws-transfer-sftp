@@ -4,6 +4,10 @@ locals {
   is_vpc = var.vpc_id != null
 }
 
+data "aws_s3_bucket" "landing" {
+  bucket = var.s3_bucket_name
+}
+
 resource "aws_transfer_server" "default" {
   identity_provider_type = "SERVICE_MANAGED"
   protocols              = ["SFTP"]
@@ -17,11 +21,9 @@ resource "aws_transfer_server" "default" {
     for_each = local.is_vpc ? [1] : []
 
     content {
-      address_allocation_ids = var.address_allocation_ids
-      security_group_ids = var.vpc_security_group_ids
-      subnet_ids = var.subnet_ids
-      vpc_endpoint_id = var.vpc_endpoint_id
-      vpc_id = var.vpc_id
+      subnet_ids          = var.subnet_ids
+      security_group_ids  = var.vpc_security_group_ids
+      vpc_id              = var.vpc_id
     }
   }
 
@@ -34,6 +36,7 @@ resource "aws_transfer_user" "default" {
   server_id = aws_transfer_server.default.id
   role      = aws_iam_role.default.arn
 
+  home_directory = "/${var.s3_bucket_name}/${each.value.user_name}"
   user_name = each.value.user_name
 
   tags = module.this.tags
@@ -97,13 +100,34 @@ data "aws_iam_policy_document" "assume_role_policy" {
 
 data "aws_iam_policy_document" "allows_s3" {
   statement {
-    sid    = "S3AccessForAWSTransferusers"
+    sid    = "AllowListingOfUserFolder"
     effect = "Allow"
 
-    actions = ["s3:*"]
+    actions = [
+      "s3:ListBucket"
+    ]
 
     resources = [
-      "arn:aws:s3:::*"
+      data.aws_s3_bucket.landing.arn
+    ]
+  }
+
+  statement {
+    sid    = "HomeDirObjectAccess"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObjectVersion",
+      "s3:GetObjectACL",
+      "s3:PutObjectACL"
+    ]
+
+    resources = [
+      "${data.aws_s3_bucket.landing.arn}/*"
     ]
   }
 }

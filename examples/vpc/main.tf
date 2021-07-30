@@ -44,6 +44,18 @@ module "security_group" {
   ]
 }
 
+module "s3_bucket" {
+  source = "cloudposse/s3-bucket/aws"
+  version = "0.41.0"
+  acl                      = "private"
+  enabled                  = true
+  user_enabled             = false
+  versioning_enabled       = false
+  name                     = "app"
+  stage                    = "test"
+  namespace                = "eg"
+}
+
 module "example" {
   source = "../.."
 
@@ -53,6 +65,8 @@ module "example" {
   vpc_id = module.vpc.vpc_id
   subnet_ids = module.dynamic_subnets.public_subnet_ids
   vpc_security_group_ids = [module.security_group.id]
+
+  s3_bucket_name = module.s3_bucket.bucket_id
 
   context = module.this.context
 }

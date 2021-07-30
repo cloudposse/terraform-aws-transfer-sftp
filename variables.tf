@@ -24,10 +24,9 @@ variable "force_destroy" {
   default     = false
 }
 
-variable "iam_attributes" {
-  type        = list(string)
-  description = "Additional attributes to add to the IDs of the IAM role and policy"
-  default     = []
+variable "s3_bucket_name" {
+  type = string
+  description = "This is the bucket that the SFTP users will use when managing files"
 }
 
 # Variables used when deploying to VPC
