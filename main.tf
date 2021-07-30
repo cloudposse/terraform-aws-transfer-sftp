@@ -5,6 +5,8 @@ locals {
 }
 
 data "aws_s3_bucket" "landing" {
+  count = local.enabled ? 1 : 0
+
   bucket = var.s3_bucket_name
 }
 
@@ -115,7 +117,7 @@ data "aws_iam_policy_document" "allows_s3" {
     ]
 
     resources = [
-      data.aws_s3_bucket.landing.arn
+      join("", data.aws_s3_bucket.landing[*].arn)
     ]
   }
 
@@ -134,7 +136,7 @@ data "aws_iam_policy_document" "allows_s3" {
     ]
 
     resources = [
-      "${data.aws_s3_bucket.landing.arn}/*"
+      "${join("", data.aws_s3_bucket.landing[*].arn)}/*"
     ]
   }
 }
