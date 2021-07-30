@@ -57,8 +57,8 @@ resource "aws_transfer_ssh_key" "default" {
 
 # Custom Domain
 resource "aws_route53_record" "main" {
-  count   = local.enabled && length(var.domain_name) > 0 && length(var.zone_id) > 0 ? 1 : 0
-  
+  count = local.enabled && length(var.domain_name) > 0 && length(var.zone_id) > 0 ? 1 : 0
+
   name    = var.domain_name
   zone_id = var.zone_id
   type    = "CNAME"

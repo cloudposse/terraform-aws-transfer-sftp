@@ -9,7 +9,7 @@ module "s3_bucket" {
   enabled            = true
   user_enabled       = false
   versioning_enabled = false
-  
+
   context = module.this.context
 }
 

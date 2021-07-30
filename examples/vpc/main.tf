@@ -12,9 +12,9 @@ module "vpc" {
 }
 
 module "dynamic_subnets" {
-  source             = "cloudposse/dynamic-subnets/aws"
-  version            = "0.39.3"
-  
+  source  = "cloudposse/dynamic-subnets/aws"
+  version = "0.39.3"
+
   availability_zones = ["us-east-2a", "us-east-2b"]
   vpc_id             = module.vpc.vpc_id
   igw_id             = module.vpc.igw_id
@@ -30,7 +30,7 @@ module "security_group" {
   id_length_limit = null
   label_key_case  = "title"
 
-  vpc_id          = module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
   rules = [
     {
       type        = "ingress"
@@ -51,7 +51,7 @@ module "s3_bucket" {
   enabled            = true
   user_enabled       = false
   versioning_enabled = false
-  
+
   context = module.this.context
 }
 
