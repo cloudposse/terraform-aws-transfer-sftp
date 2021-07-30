@@ -9,15 +9,12 @@ module "s3_bucket" {
   enabled            = true
   user_enabled       = false
   versioning_enabled = false
-  name               = "app"
-  stage              = "test"
-  namespace          = "eg"
+  
+  context = module.this.context
 }
 
 module "example" {
   source = "../.."
-
-  region = var.region
 
   sftp_users = var.sftp_users
 

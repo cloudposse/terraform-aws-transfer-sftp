@@ -1,7 +1,3 @@
-variable "region" {
-  type = string
-}
-
 variable "domain" {
   type        = string
   description = "Where your files are stored. S3 or EFS"

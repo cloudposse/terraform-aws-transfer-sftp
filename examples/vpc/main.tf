@@ -6,22 +6,21 @@ module "vpc" {
   source  = "cloudposse/vpc/aws"
   version = "0.25.0"
 
-  namespace  = "eg"
-  stage      = "test"
-  name       = "app"
   cidr_block = "10.0.0.0/16"
+
+  context = module.this.context
 }
 
 module "dynamic_subnets" {
   source             = "cloudposse/dynamic-subnets/aws"
   version            = "0.39.3"
-  namespace          = "eg"
-  stage              = "test"
-  name               = "app"
+  
   availability_zones = ["us-east-2a", "us-east-2b"]
   vpc_id             = module.vpc.vpc_id
   igw_id             = module.vpc.igw_id
   cidr_block         = "10.0.0.0/16"
+
+  context = module.this.context
 }
 
 module "security_group" {
@@ -30,8 +29,7 @@ module "security_group" {
   environment     = "test"
   id_length_limit = null
   label_key_case  = "title"
-  name            = "allow_sftp"
-  namespace       = "eg"
+
   vpc_id          = module.vpc.vpc_id
   rules = [
     {
@@ -42,6 +40,8 @@ module "security_group" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   ]
+
+  context = module.this.context
 }
 
 module "s3_bucket" {
@@ -51,15 +51,12 @@ module "s3_bucket" {
   enabled            = true
   user_enabled       = false
   versioning_enabled = false
-  name               = "app"
-  stage              = "test"
-  namespace          = "eg"
+  
+  context = module.this.context
 }
 
 module "example" {
   source = "../.."
-
-  region = var.region
 
   sftp_users             = var.sftp_users
   vpc_id                 = module.vpc.vpc_id
