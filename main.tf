@@ -14,16 +14,16 @@ resource "aws_transfer_server" "default" {
   domain                 = var.domain
   endpoint_type          = local.is_vpc ? "VPC" : "PUBLIC"
   force_destroy          = var.force_destroy
-  security_policy_name = var.security_policy_name
-  logging_role = aws_iam_role.logging.arn
+  security_policy_name   = var.security_policy_name
+  logging_role           = aws_iam_role.logging.arn
 
   dynamic "endpoint_details" {
     for_each = local.is_vpc ? [1] : []
 
     content {
-      subnet_ids          = var.subnet_ids
-      security_group_ids  = var.vpc_security_group_ids
-      vpc_id              = var.vpc_id
+      subnet_ids         = var.subnet_ids
+      security_group_ids = var.vpc_security_group_ids
+      vpc_id             = var.vpc_id
     }
   }
 
@@ -37,7 +37,7 @@ resource "aws_transfer_user" "default" {
   role      = aws_iam_role.default.arn
 
   home_directory = "/${var.s3_bucket_name}/${each.value.user_name}"
-  user_name = each.value.user_name
+  user_name      = each.value.user_name
 
   tags = module.this.tags
 }
