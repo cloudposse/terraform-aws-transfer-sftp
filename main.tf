@@ -9,6 +9,8 @@ data "aws_s3_bucket" "landing" {
 }
 
 resource "aws_transfer_server" "default" {
+  count = local.enabled ? 1 : 0
+
   identity_provider_type = "SERVICE_MANAGED"
   protocols              = ["SFTP"]
   domain                 = var.domain
@@ -33,7 +35,7 @@ resource "aws_transfer_server" "default" {
 resource "aws_transfer_user" "default" {
   for_each = local.enabled ? var.sftp_users : {}
 
-  server_id = aws_transfer_server.default.id
+  server_id = join("", aws_transfer_server.default[*].id)
   role      = join("", aws_iam_role.default[*].arn)
 
   home_directory = "/${var.s3_bucket_name}/${each.value.user_name}"
@@ -45,7 +47,7 @@ resource "aws_transfer_user" "default" {
 resource "aws_transfer_ssh_key" "default" {
   for_each = local.enabled ? var.sftp_users : {}
 
-  server_id = aws_transfer_server.default.id
+  server_id = join("", aws_transfer_server.default[*].id)
 
   user_name = each.value.user_name
   body      = each.value.public_key
@@ -65,7 +67,7 @@ resource "aws_route53_record" "main" {
   ttl     = "300"
 
   records = [
-    aws_transfer_server.default.endpoint
+    join("", aws_transfer_server.default[*].endpoint)
   ]
 }
 
