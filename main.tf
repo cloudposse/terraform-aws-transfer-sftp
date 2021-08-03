@@ -25,9 +25,9 @@ resource "aws_transfer_server" "default" {
     for_each = local.is_vpc ? [1] : []
 
     content {
-      subnet_ids         = var.subnet_ids
-      security_group_ids = var.vpc_security_group_ids
-      vpc_id             = var.vpc_id
+      subnet_ids             = var.subnet_ids
+      security_group_ids     = var.vpc_security_group_ids
+      vpc_id                 = var.vpc_id
       address_allocation_ids = var.address_allocation_ids
     }
   }
