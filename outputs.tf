@@ -5,7 +5,7 @@ output "id" {
 
 output "transfer_endpoint" {
   description = "The endpoint of the Transfer Server"
-  value       = module.this.enabled ? join("", aws_transfer_server.default[*].endpoint) : null
+  value       = module.this.enabled ? join("", aws_transfer_server.default.*.endpoint) : null
 }
 
 output "elastic_ips" {
