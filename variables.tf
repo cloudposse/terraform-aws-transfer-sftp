@@ -76,6 +76,6 @@ variable "zone_id" {
 
 variable "provision_eip" {
   type        = bool
-  description = "Have this module provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet"
+  description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
 }
