@@ -28,7 +28,7 @@ resource "aws_transfer_server" "default" {
       subnet_ids             = var.subnet_ids
       security_group_ids     = var.vpc_security_group_ids
       vpc_id                 = var.vpc_id
-      address_allocation_ids = var.address_allocation_ids
+      address_allocation_ids = var.provision_eip ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
   }
 
@@ -58,6 +58,12 @@ resource "aws_transfer_ssh_key" "default" {
   depends_on = [
     aws_transfer_user.default
   ]
+}
+
+resource "aws_eip" "sftp" {
+  count = local.enabled && var.provision_eip ? length(var.subnet_ids) : 0
+
+  vpc = local.is_vpc
 }
 
 # Custom Domain
