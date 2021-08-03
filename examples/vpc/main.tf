@@ -55,6 +55,12 @@ module "s3_bucket" {
   context = module.this.context
 }
 
+resource "aws_eip" "sftp" {
+  count = length(module.dynamic_subnets.public_subnet_ids)
+
+  vpc = true
+}
+
 module "example" {
   source = "../.."
 
@@ -62,6 +68,7 @@ module "example" {
   vpc_id                 = module.vpc.vpc_id
   subnet_ids             = module.dynamic_subnets.public_subnet_ids
   vpc_security_group_ids = [module.security_group.id]
+  address_allocation_ids = aws_eip.sftp.*.id
 
   s3_bucket_name = module.s3_bucket.bucket_id
 
