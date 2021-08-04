@@ -10,5 +10,5 @@ output "transfer_endpoint" {
 
 output "elastic_ips" {
   description = "Provisioned Elastic IPs"
-  value       = module.this.enabled && var.provision_eip ? aws_eip.sftp.*.id : null
+  value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.id : null
 }
