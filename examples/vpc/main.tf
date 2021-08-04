@@ -58,7 +58,7 @@ module "s3_bucket" {
 module "example" {
   source = "../.."
 
-  provision_eip          = true
+  eip_eip_enabled = true
   s3_bucket_name         = module.s3_bucket.bucket_id
   sftp_users             = var.sftp_users
   subnet_ids             = [module.dynamic_subnets.public_subnet_ids[0]]
