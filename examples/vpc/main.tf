@@ -23,27 +23,6 @@ module "dynamic_subnets" {
   context = module.this.context
 }
 
-module "security_group" {
-  source          = "cloudposse/security-group/aws"
-  version         = "0.3.1"
-  environment     = "test"
-  id_length_limit = null
-  label_key_case  = "title"
-
-  vpc_id = module.vpc.vpc_id
-  rules = [
-    {
-      type        = "ingress"
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  ]
-
-  context = module.this.context
-}
-
 module "s3_bucket" {
   source             = "cloudposse/s3-bucket/aws"
   version            = "0.41.0"
@@ -58,12 +37,12 @@ module "s3_bucket" {
 module "example" {
   source = "../.."
 
-  eip_enabled            = true
-  s3_bucket_name         = module.s3_bucket.bucket_id
-  sftp_users             = var.sftp_users
-  subnet_ids             = [module.dynamic_subnets.public_subnet_ids[0]]
-  vpc_id                 = module.vpc.vpc_id
-  vpc_security_group_ids = [module.security_group.id]
+  eip_enabled    = true
+  s3_bucket_name = module.s3_bucket.bucket_id
+  sftp_users     = var.sftp_users
+  subnet_ids     = [module.dynamic_subnets.public_subnet_ids[0]]
+  vpc_id         = module.vpc.vpc_id
+  allowed_cidrs  = ["0.0.0.0/0"]
 
   context = module.this.context
 }

@@ -38,6 +38,12 @@ variable "address_allocation_ids" {
   default     = []
 }
 
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "A list of CIDR's allowed to connect to the SFTP endpoint. This has precedence over vpc_security_group_ids."
+  default     = []
+}
+
 variable "vpc_security_group_ids" {
   type        = list(string)
   description = "A list of security groups IDs that are available to attach to your server's endpoint. If no security groups are specified, the VPC's default security groups are automatically assigned to your endpoint. This property can only be used when endpoint_type is set to VPC."

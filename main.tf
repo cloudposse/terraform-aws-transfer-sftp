@@ -1,7 +1,8 @@
 locals {
   enabled = module.this.enabled
 
-  is_vpc = var.vpc_id != null
+  is_vpc    = var.vpc_id != null
+  create_sg = local.enabled && length(var.allowed_cidrs) > 0
 }
 
 data "aws_s3_bucket" "landing" {
@@ -26,7 +27,7 @@ resource "aws_transfer_server" "default" {
 
     content {
       subnet_ids             = var.subnet_ids
-      security_group_ids     = var.vpc_security_group_ids
+      security_group_ids     = local.create_sg ? module.security_group.*.id : var.vpc_security_group_ids
       vpc_id                 = var.vpc_id
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
@@ -64,6 +65,27 @@ resource "aws_eip" "sftp" {
   count = local.enabled && var.eip_enabled ? length(var.subnet_ids) : 0
 
   vpc = local.is_vpc
+}
+
+module "security_group" {
+  count = local.create_sg ? 1 : 0
+
+  source  = "cloudposse/security-group/aws"
+  version = "0.3.1"
+
+  vpc_id = local.is_vpc ? var.vpc_id : null
+
+  rules = [
+    {
+      type        = "ingress"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = var.allowed_cidrs
+    }
+  ]
+
+  context = module.this.context
 }
 
 # Custom Domain
