@@ -73,3 +73,9 @@ variable "zone_id" {
   description = "Route53 Zone ID to add the CNAME"
   default     = ""
 }
+
+variable "eip_enabled" {
+  type        = bool
+  description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
+  default     = false
+}
