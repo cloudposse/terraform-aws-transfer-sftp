@@ -37,12 +37,19 @@ module "s3_bucket" {
 module "example" {
   source = "../.."
 
-  eip_enabled    = true
+  eip_enabled            = true
+  security_group_enabled = true
+  security_group_rules = [{
+    type        = "ingress"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }]
   s3_bucket_name = module.s3_bucket.bucket_id
   sftp_users     = var.sftp_users
   subnet_ids     = [module.dynamic_subnets.public_subnet_ids[0]]
   vpc_id         = module.vpc.vpc_id
-  allowed_cidrs  = ["0.0.0.0/0"]
 
   context = module.this.context
 }

@@ -38,10 +38,41 @@ variable "address_allocation_ids" {
   default     = []
 }
 
-variable "allowed_cidrs" {
-  type        = list(string)
-  description = "A list of CIDR's allowed to connect to the SFTP endpoint. This has precedence over vpc_security_group_ids."
-  default     = []
+variable "security_group_enabled" {
+  type        = bool
+  description = "Whether to create default Security Group for AWS Transfer Server."
+  default     = true
+}
+
+variable "security_group_description" {
+  type        = string
+  default     = "AWS Transfer Server Security Group"
+  description = "The Security Group description."
+}
+
+variable "security_group_use_name_prefix" {
+  type        = bool
+  default     = false
+  description = "Whether to create a default Security Group with unique name beginning with the normalized prefix."
+}
+
+variable "security_group_rules" {
+  type = list(any)
+  default = [
+    {
+      type        = "ingress"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = ["10.0.0.0/16"]
+      description = "Allow inbound traffic"
+    }
+  ]
+  description = <<-EOT
+    A list of maps of Security Group rules. 
+    The values of map is fully complated with `aws_security_group_rule` resource. 
+    To get more info see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule .
+  EOT
 }
 
 variable "vpc_security_group_ids" {
