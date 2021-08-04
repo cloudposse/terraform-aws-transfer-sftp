@@ -2,7 +2,7 @@ locals {
   enabled = module.this.enabled
 
   is_vpc                 = var.vpc_id != null
-  security_group_enabled      = module.this.enabled && var.security_group_enabled
+  security_group_enabled = module.this.enabled && var.security_group_enabled
 }
 
 data "aws_s3_bucket" "landing" {
