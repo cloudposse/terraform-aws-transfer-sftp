@@ -14,6 +14,12 @@ variable "sftp_users" {
   description = "List of SFTP usernames and public keys"
 }
 
+variable "sftp_restricted" {
+  type        = bool
+  description = "Restricts SFTP users so they only have access to their home directories."
+  default     = true
+}
+
 variable "force_destroy" {
   type        = bool
   description = "Forces the AWS Transfer Server to be destroyed"
