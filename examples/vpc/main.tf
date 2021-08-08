@@ -48,9 +48,9 @@ module "example" {
   }]
   s3_bucket_name  = module.s3_bucket.bucket_id
   sftp_users      = var.sftp_users
-  subnet_ids      = [module.dynamic_subnets.public_subnet_ids[0]]
+  subnet_ids      = [module.dynamic_subnets.public_subnet_ids[1]]
   vpc_id          = module.vpc.vpc_id
-  sftp_restricted = true
+  restricted_home = true
 
   context = module.this.context
 }

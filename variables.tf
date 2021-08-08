@@ -14,7 +14,7 @@ variable "sftp_users" {
   description = "List of SFTP usernames and public keys"
 }
 
-variable "sftp_restricted" {
+variable "restricted_home" {
   type        = bool
   description = "Restricts SFTP users so they only have access to their home directories."
   default     = true

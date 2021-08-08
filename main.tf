@@ -46,10 +46,10 @@ resource "aws_transfer_user" "default" {
 
   user_name = each.value.user_name
 
-  home_directory_type = var.sftp_restricted ? "LOGICAL" : "PATH"
+  home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
 
   dynamic "home_directory_mappings" {
-    for_each = var.sftp_restricted ? [1] : []
+    for_each = var.restricted_home ? [1] : []
 
     content {
       entry  = "/"
