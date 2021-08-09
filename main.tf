@@ -196,7 +196,7 @@ module "iam_label" {
 resource "aws_iam_policy" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name = module.iam_label[index(local.user_names, each.value)].id
+  name   = module.iam_label[index(local.user_names, each.value)].id
   policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
 }
 
