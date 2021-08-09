@@ -106,16 +106,6 @@ resource "aws_route53_record" "main" {
   ]
 }
 
-# IAM
-module "iam_label" {
-  source  = "cloudposse/label/null"
-  version = "0.24.1"
-
-  attributes = ["transfer", "s3"]
-
-  context = module.this.context
-}
-
 module "logging_label" {
   source  = "cloudposse/label/null"
   version = "0.24.1"
@@ -192,17 +182,28 @@ data "aws_iam_policy_document" "logging" {
   }
 }
 
+module "iam_label" {
+  for_each = local.enabled ? local.user_names_map : {}
+
+  source  = "cloudposse/label/null"
+  version = "0.24.1"
+
+  attributes = ["transfer", "s3", each.value]
+
+  context = module.this.context
+}
+
 resource "aws_iam_policy" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name   = "${module.iam_label.id}-${each.value}"
+  name = module.iam_label[index(local.user_names, each.value)].id
   policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
 }
 
 resource "aws_iam_role" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name = "${module.iam_label.id}-${each.value}"
+  name = module.iam_label[index(local.user_names, each.value)].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[index(local.user_names, each.value)].arn]
