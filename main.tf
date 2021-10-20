@@ -1,16 +1,11 @@
 locals {
   enabled = module.this.enabled
+  kms_enabled = local.enabled && var.kms_key_arn != null
 
   is_vpc                 = var.vpc_id != null
   security_group_enabled = module.this.enabled && var.security_group_enabled
   user_names             = keys(var.sftp_users)
   user_names_map         = { for idx, user in local.user_names : idx => user }
-}
-
-data "aws_s3_bucket" "landing" {
-  count = local.enabled ? 1 : 0
-
-  bucket = var.s3_bucket_name
 }
 
 resource "aws_transfer_server" "default" {
@@ -139,9 +134,15 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
       "s3:ListBucket"
     ]
 
-    resources = [
-      join("", data.aws_s3_bucket.landing[*].arn)
-    ]
+    resources = [ "arn:aws:s3:::$${Transfer:HomeBucket}" ]
+    condition {
+      test = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "$${Transfer:HomeFolder}/*",
+        "$${Transfer:HomeFolder}"
+      ]
+    }
   }
 
   statement {
@@ -158,10 +159,39 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
       "s3:PutObjectACL"
     ]
 
+    resources = [ "arn:aws:s3:::$${Transfer:HomeDirectory}*" ]
+  }
+
+}
+
+data "aws_iam_policy_document" "kms_access_for_sftp_users" {
+  for_each = local.kms_enabled ? local.user_names_map : {}
+
+    statement {
+    sid    = "KMSKeyAccess"
+    effect = "Allow"
+
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+
     resources = [
-      "${join("", data.aws_s3_bucket.landing[*].arn)}/${each.value}/*"
+      join("", [var.kms_key_arn])
     ]
   }
+}
+
+data "aws_iam_policy_document" "s3_kms_access_for_sftp_users" {
+  for_each = local.enabled ? local.user_names_map : {}
+
+  source_policy_documents = [
+    data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json,
+    data.aws_iam_policy_document.kms_access_for_sftp_users[index(local.user_names, each.value)].json
+  ]
 }
 
 data "aws_iam_policy_document" "logging" {
@@ -193,20 +223,20 @@ module "iam_label" {
   context = module.this.context
 }
 
-resource "aws_iam_policy" "s3_access_for_sftp_users" {
+resource "aws_iam_policy" "s3_kms_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
   name   = module.iam_label[index(local.user_names, each.value)].id
-  policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
+  policy = data.aws_iam_policy_document.s3_kms_access_for_sftp_users[index(local.user_names, each.value)].json
 }
 
-resource "aws_iam_role" "s3_access_for_sftp_users" {
+resource "aws_iam_role" "s3_kms_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
   name = module.iam_label[index(local.user_names, each.value)].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
-  managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[index(local.user_names, each.value)].arn]
+  managed_policy_arns = [aws_iam_policy.s3_kms_access_for_sftp_users[index(local.user_names, each.value)].arn]
 }
 
 resource "aws_iam_policy" "logging" {
