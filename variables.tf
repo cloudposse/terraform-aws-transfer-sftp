@@ -31,6 +31,11 @@ variable "s3_bucket_name" {
   description = "This is the bucket that the SFTP users will use when managing files"
 }
 
+variable "landing_s3_bucket_arn" {
+  type        = list(string)
+  description = "This is the landing S3 bucket ARN that the SFTP users will use when managing files"
+}
+
 # Variables used when deploying to VPC
 variable "vpc_id" {
   type        = string
@@ -121,4 +126,10 @@ variable "eip_enabled" {
   type        = bool
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "The ARN for the sftp s3 bucket KMS encryption key"
+  default     = null
 }
