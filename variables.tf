@@ -31,11 +31,6 @@ variable "s3_bucket_name" {
   description = "This is the bucket that the SFTP users will use when managing files"
 }
 
-variable "landing_s3_bucket_arn" {
-  type        = list(string)
-  description = "This is the landing S3 bucket ARN that the SFTP users will use when managing files"
-}
-
 # Variables used when deploying to VPC
 variable "vpc_id" {
   type        = string
@@ -80,8 +75,8 @@ variable "security_group_rules" {
     }
   ]
   description = <<-EOT
-    A list of maps of Security Group rules. 
-    The values of map is fully complated with `aws_security_group_rule` resource. 
+    A list of maps of Security Group rules.
+    The values of map is fully complated with `aws_security_group_rule` resource.
     To get more info see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule .
   EOT
 }
@@ -132,4 +127,10 @@ variable "kms_key_arn" {
   type        = string
   description = "The ARN for the sftp s3 bucket KMS encryption key"
   default     = null
+}
+
+variable "scope_down_policy_enabled" {
+  type        = bool
+  description = "Whether to associate the users with a scope down policy. This also changes the IAM role and policy logic to create a single transfer service role, since the session policy is assumed to limit further."
+  default     = false
 }
