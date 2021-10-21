@@ -108,7 +108,7 @@ resource "aws_route53_record" "main" {
 
 module "logging_label" {
   source  = "cloudposse/label/null"
-  version = "0.24.1"
+  version = "0.25.0"
 
   attributes = ["transfer", "cloudwatch"]
 
@@ -186,7 +186,7 @@ module "iam_label" {
   for_each = local.enabled ? local.user_names_map : {}
 
   source  = "cloudposse/label/null"
-  version = "0.24.1"
+  version = "0.25.0"
 
   attributes = ["transfer", "s3", each.value]
 
