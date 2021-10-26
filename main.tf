@@ -312,7 +312,7 @@ module "iam_label" {
   source  = "cloudposse/label/null"
   version = "0.24.1"
 
-  attributes = ["transfer", "s3", each.value]
+  attributes = local.scope_down_policy_enabled ? ["transfer", "s3"] : ["transfer", "s3", each.value]
 
   context = module.this.context
 }
