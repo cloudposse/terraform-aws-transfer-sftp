@@ -47,15 +47,16 @@ resource "aws_transfer_server" "default" {
 
 resource "aws_transfer_user" "default" {
   for_each = local.enabled ? var.sftp_users : {}
-
   server_id = join("", aws_transfer_server.default[*].id)
-  role      = aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
+  role      = local.scope_down_policy_enabled ? join("", aws_iam_role.transfer_service_policy_default[*].arn) : aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
 
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
 
-  policy    = local.scope_down_policy_enabled ? data.aws_iam_policy_document.session_policy_default[0].json : []
+  policy    = local.scope_down_policy_enabled ? data.aws_iam_policy_document.session_kms_access_for_sftp_users[0].json : null
+
+  home_directory = var.restricted_home ? "" : "/${var.s3_bucket_name}/${each.value.user_name}"
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? [1] : []
@@ -149,6 +150,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
+      "arn:aws:s3:::${var.s3_bucket_name}",
       "arn:aws:s3:::${var.s3_bucket_name}/${each.value}/*"
     ]
   }
@@ -284,7 +286,23 @@ data "aws_iam_policy_document" "s3_kms_access_for_sftp_users" {
   for_each = local.multi_role_policy_enabled ? local.user_names_map : {}
 
   source_policy_documents = concat([data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json],
-    local.kms_enabled ? data.aws_iam_policy_document.kms_access_for_sftp_users[0].json : []
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
+  )
+}
+
+data "aws_iam_policy_document" "transfer_kms_access_for_sftp_users" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  source_policy_documents = concat([data.aws_iam_policy_document.transfer_service_policy_default[0].json],
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
+  )
+}
+
+data "aws_iam_policy_document" "session_kms_access_for_sftp_users" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  source_policy_documents = concat([data.aws_iam_policy_document.session_policy_default[0].json],
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
   )
 }
 
@@ -321,7 +339,7 @@ resource "aws_iam_policy" "s3_access_for_sftp_users" {
   for_each = local.multi_role_policy_enabled ? local.user_names_map : {}
 
   name   = module.iam_label[index(local.user_names, each.value)].id
-  policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
+  policy = data.aws_iam_policy_document.s3_kms_access_for_sftp_users[index(local.user_names, each.value)].json
 }
 
 resource "aws_iam_role" "s3_access_for_sftp_users" {
@@ -336,7 +354,7 @@ resource "aws_iam_role" "s3_access_for_sftp_users" {
 resource "aws_iam_policy" "transfer_service_policy_default" {
   count = local.scope_down_policy_enabled ? 1 : 0
   name   = module.iam_label[0].id
-  policy = data.aws_iam_policy_document.transfer_service_policy_default[0].json
+  policy = data.aws_iam_policy_document.transfer_kms_access_for_sftp_users[0].json
 }
 
 resource "aws_iam_role" "transfer_service_policy_default" {
