@@ -1,6 +1,6 @@
 locals {
-  enabled                   = module.this.enabled
-  kms_enabled               = local.enabled && var.kms_key_arn != null
+  enabled     = module.this.enabled
+  kms_enabled = local.enabled && var.kms_key_arn != null
   # If enabling a scope down policy, the session policy is assumed to reference the user home folders
   # in its policy. Hence we only need a single role for transfer service. The role arn can be referenced
   # in the S3 bucket policy.
@@ -46,7 +46,7 @@ resource "aws_transfer_server" "default" {
 }
 
 resource "aws_transfer_user" "default" {
-  for_each = local.enabled ? var.sftp_users : {}
+  for_each  = local.enabled ? var.sftp_users : {}
   server_id = join("", aws_transfer_server.default[*].id)
   role      = local.scope_down_policy_enabled ? join("", aws_iam_role.transfer_service_policy_default[*].arn) : aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
 
@@ -54,7 +54,7 @@ resource "aws_transfer_user" "default" {
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
 
-  policy    = local.scope_down_policy_enabled ? data.aws_iam_policy_document.session_kms_access_for_sftp_users[0].json : null
+  policy = local.scope_down_policy_enabled ? data.aws_iam_policy_document.session_kms_access_for_sftp_users[0].json : null
 
   home_directory = var.restricted_home ? "" : "/${var.s3_bucket_name}/${each.value.user_name}"
 
@@ -171,7 +171,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
 
     resources = [
       "arn:aws:s3:::${var.s3_bucket_name}/${each.value}/*"
-     ]
+    ]
   }
 
 }
@@ -352,14 +352,14 @@ resource "aws_iam_role" "s3_access_for_sftp_users" {
 }
 
 resource "aws_iam_policy" "transfer_service_policy_default" {
-  count = local.scope_down_policy_enabled ? 1 : 0
+  count  = local.scope_down_policy_enabled ? 1 : 0
   name   = module.iam_label[0].id
   policy = data.aws_iam_policy_document.transfer_kms_access_for_sftp_users[0].json
 }
 
 resource "aws_iam_role" "transfer_service_policy_default" {
   count = local.scope_down_policy_enabled ? 1 : 0
-  name = module.iam_label[0].id
+  name  = module.iam_label[0].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [aws_iam_policy.transfer_service_policy_default[0].arn]
