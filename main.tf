@@ -5,7 +5,7 @@ locals {
   # in its policy. Hence we only need a single role for transfer service. The role arn can be referenced
   # in the S3 bucket policy.
   # See https://docs.aws.amazon.com/transfer/latest/userguide/users-policies.html#users-policies-session
-  multi_role_policy_enabled = local.enabled && !var.scope_down_policy_enabled
+  multi_role_policy_enabled = local.enabled && ! var.scope_down_policy_enabled
   scope_down_policy_enabled = local.enabled && var.scope_down_policy_enabled
 
   is_vpc                 = var.vpc_id != null
