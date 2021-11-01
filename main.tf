@@ -1,5 +1,12 @@
 locals {
-  enabled = module.this.enabled
+  enabled     = module.this.enabled
+  kms_enabled = local.enabled && var.kms_key_arn != null
+  # If enabling a scope down policy, the session policy is assumed to reference the user home folders
+  # in its policy. Hence we only need a single role for transfer service. The role arn can be referenced
+  # in the S3 bucket policy.
+  # See https://docs.aws.amazon.com/transfer/latest/userguide/users-policies.html#users-policies-session
+  multi_role_policy_enabled = local.enabled && !var.scope_down_policy_enabled
+  scope_down_policy_enabled = local.enabled && var.scope_down_policy_enabled
 
   is_vpc                 = var.vpc_id != null
   security_group_enabled = module.this.enabled && var.security_group_enabled
@@ -39,14 +46,17 @@ resource "aws_transfer_server" "default" {
 }
 
 resource "aws_transfer_user" "default" {
-  for_each = local.enabled ? var.sftp_users : {}
-
+  for_each  = local.enabled ? var.sftp_users : {}
   server_id = join("", aws_transfer_server.default[*].id)
-  role      = aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
+  role      = local.scope_down_policy_enabled ? join("", aws_iam_role.transfer_service_policy_default[*].arn) : aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
 
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
+
+  policy = local.scope_down_policy_enabled ? data.aws_iam_policy_document.session_kms_access_for_sftp_users[0].json : null
+
+  home_directory = var.restricted_home ? "" : "/${var.s3_bucket_name}/${each.value.user_name}"
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? [1] : []
@@ -140,7 +150,8 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
-      join("", data.aws_s3_bucket.landing[*].arn)
+      "arn:aws:s3:::${var.s3_bucket_name}",
+      "arn:aws:s3:::${var.s3_bucket_name}/${each.value}/*"
     ]
   }
 
@@ -159,9 +170,140 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
-      "${join("", data.aws_s3_bucket.landing[*].arn)}/${each.value}/*"
+      "arn:aws:s3:::${var.s3_bucket_name}/${each.value}/*"
     ]
   }
+
+}
+
+data "aws_iam_policy_document" "kms_access_for_sftp_users" {
+  count = local.kms_enabled ? 1 : 0
+
+  statement {
+    sid    = "KMSKeyAccess"
+    effect = "Allow"
+
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+
+    resources = [
+      join("", [var.kms_key_arn])
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "transfer_service_policy_default" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  statement {
+    sid    = "AllowListingOfUserFolder"
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_name}",
+      "arn:aws:s3:::${var.s3_bucket_name}/*"
+    ]
+  }
+
+  statement {
+    sid    = "HomeDirObjectAccess"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObjectVersion",
+      "s3:GetObjectACL",
+      "s3:PutObjectACL"
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_name}/*"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "session_policy_default" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  # This uses Transfer Service automatic interpolations, so we escape the terraform interpolation with double $
+  # See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/transfer_user#argument-reference
+  statement {
+    sid    = "AllowListingOfUserFolder"
+    effect = "Allow"
+
+    actions = [
+      "s3:ListBucket"
+    ]
+
+    resources = [
+      "arn:aws:s3:::$${transfer:HomeBucket}"
+    ]
+    condition {
+      test = "StringLike"
+      values = [
+        "$${transfer:HomeFolder}/*",
+        "$${transfer:HomeFolder}"
+      ]
+      variable = "s3:prefix"
+    }
+  }
+
+  statement {
+    sid    = "HomeDirObjectAccess"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:GetObjectVersion",
+      "s3:GetObjectACL",
+      "s3:PutObjectACL"
+    ]
+
+    # Note: we assume that users have their home directories set to include a trailing slash, to signify that it is a directory
+    # If not, you need to provide your own policy
+    resources = [
+      "arn:aws:s3:::$${transfer:HomeDirectory}*"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "s3_kms_access_for_sftp_users" {
+  for_each = local.multi_role_policy_enabled ? local.user_names_map : {}
+
+  source_policy_documents = concat([data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json],
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
+  )
+}
+
+data "aws_iam_policy_document" "transfer_kms_access_for_sftp_users" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  source_policy_documents = concat([data.aws_iam_policy_document.transfer_service_policy_default[0].json],
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
+  )
+}
+
+data "aws_iam_policy_document" "session_kms_access_for_sftp_users" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+
+  source_policy_documents = concat([data.aws_iam_policy_document.session_policy_default[0].json],
+    local.kms_enabled ? [data.aws_iam_policy_document.kms_access_for_sftp_users[0].json] : []
+  )
 }
 
 data "aws_iam_policy_document" "logging" {
@@ -188,25 +330,39 @@ module "iam_label" {
   source  = "cloudposse/label/null"
   version = "0.25.0"
 
-  attributes = ["transfer", "s3", each.value]
+  attributes = local.scope_down_policy_enabled ? ["transfer", "s3"] : ["transfer", "s3", each.value]
 
   context = module.this.context
 }
 
 resource "aws_iam_policy" "s3_access_for_sftp_users" {
-  for_each = local.enabled ? local.user_names_map : {}
+  for_each = local.multi_role_policy_enabled ? local.user_names_map : {}
 
   name   = module.iam_label[index(local.user_names, each.value)].id
-  policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
+  policy = data.aws_iam_policy_document.s3_kms_access_for_sftp_users[index(local.user_names, each.value)].json
 }
 
 resource "aws_iam_role" "s3_access_for_sftp_users" {
-  for_each = local.enabled ? local.user_names_map : {}
+  for_each = local.multi_role_policy_enabled ? local.user_names_map : {}
 
   name = module.iam_label[index(local.user_names, each.value)].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[index(local.user_names, each.value)].arn]
+}
+
+resource "aws_iam_policy" "transfer_service_policy_default" {
+  count  = local.scope_down_policy_enabled ? 1 : 0
+  name   = module.iam_label[0].id
+  policy = data.aws_iam_policy_document.transfer_kms_access_for_sftp_users[0].json
+}
+
+resource "aws_iam_role" "transfer_service_policy_default" {
+  count = local.scope_down_policy_enabled ? 1 : 0
+  name  = module.iam_label[0].id
+
+  assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
+  managed_policy_arns = [aws_iam_policy.transfer_service_policy_default[0].arn]
 }
 
 resource "aws_iam_policy" "logging" {
