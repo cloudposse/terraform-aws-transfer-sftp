@@ -122,3 +122,9 @@ variable "eip_enabled" {
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
 }
+
+variable "host_key" {
+  type = string
+  description = "Host key for ssh"
+  default = ""
+}
