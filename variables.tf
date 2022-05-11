@@ -124,7 +124,7 @@ variable "eip_enabled" {
 }
 
 variable "host_key" {
-  type = string
+  type        = string
   description = "Host key for ssh"
-  default = ""
+  default     = ""
 }
