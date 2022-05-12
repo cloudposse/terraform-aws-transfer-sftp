@@ -216,6 +216,7 @@ Available targets:
 |------|-------------|
 | <a name="output_elastic_ips"></a> [elastic\_ips](#output\_elastic\_ips) | Provisioned Elastic IPs |
 | <a name="output_id"></a> [id](#output\_id) | ID of the created example |
+| <a name="output_s3_access_role_arns"></a> [s3\_access\_role\_arns](#output\_s3\_access\_role\_arns) | Role ARNs for the S3 access |
 | <a name="output_transfer_endpoint"></a> [transfer\_endpoint](#output\_transfer\_endpoint) | The endpoint of the Transfer Server |
 <!-- markdownlint-restore -->
 
@@ -318,7 +319,7 @@ In general, PRs are welcome. We follow the typical "fork-and-pull" Git workflow.
 
 ## Copyrights
 
-Copyright © 2020-2021 [Cloud Posse, LLC](https://cloudposse.com)
+Copyright © 2020-2022 [Cloud Posse, LLC](https://cloudposse.com)
 
 
 

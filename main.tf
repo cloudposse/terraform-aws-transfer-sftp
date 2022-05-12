@@ -47,7 +47,7 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
-  home_directory      = !var.restricted_home ? "/${var.s3_bucket_name}" : null
+  home_directory      = ! var.restricted_home ? "/${var.s3_bucket_name}" : null
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? [1] : []
