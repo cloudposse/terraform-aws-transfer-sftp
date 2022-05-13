@@ -15,5 +15,5 @@ output "elastic_ips" {
   
 output "transfer_id" {
   description = "The id of the transfer server"
-  value       = module.this.enabled ? aws_transfer_server.default.[0].id : null
+  value       = module.this.enabled ? aws_transfer_server.default.*.id : null
 }
