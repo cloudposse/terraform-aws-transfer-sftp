@@ -122,3 +122,10 @@ variable "eip_enabled" {
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
 }
+
+
+variable "pre_authentication_login_banner" {
+  type        = string
+  description = "This is pre authentication login banner while connectimg to server"
+  default     = "This system is for the use of authorized Appzen users only."
+}

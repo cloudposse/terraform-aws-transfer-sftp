@@ -16,14 +16,14 @@ data "aws_s3_bucket" "landing" {
 resource "aws_transfer_server" "default" {
   count = local.enabled ? 1 : 0
 
-  identity_provider_type = "SERVICE_MANAGED"
-  protocols              = ["SFTP"]
-  domain                 = var.domain
-  endpoint_type          = local.is_vpc ? "VPC" : "PUBLIC"
-  force_destroy          = var.force_destroy
-  security_policy_name   = var.security_policy_name
-  logging_role           = join("", aws_iam_role.logging[*].arn)
-
+  identity_provider_type          = "SERVICE_MANAGED"
+  protocols                       = ["SFTP"]
+  domain                          = var.domain
+  endpoint_type                   = local.is_vpc ? "VPC" : "PUBLIC"
+  force_destroy                   = var.force_destroy
+  security_policy_name            = var.security_policy_name
+  logging_role                    = join("", aws_iam_role.logging[*].arn)
+  pre_authentication_login_banner = var.pre_authentication_login_banner
   dynamic "endpoint_details" {
     for_each = local.is_vpc ? [1] : []
 
