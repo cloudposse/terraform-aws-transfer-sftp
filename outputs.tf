@@ -12,7 +12,7 @@ output "elastic_ips" {
   description = "Provisioned Elastic IPs"
   value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.id : null
 }
-  
+
 output "transfer_id" {
   description = "The id of the transfer server"
   value       = module.this.enabled ? join("", aws_transfer_server.default.*.id) : null
