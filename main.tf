@@ -117,13 +117,13 @@ resource "null_resource" "transfer_server_dns_tags" {
     aws_region          = data.aws_region.current.name
     hostname            = var.domain_name
     zone_id             = var.zone_id
-    transfer_server_arn = aws_transfer_server.default.arn
+    transfer_server_arn = aws_transfer_server.default[0].arn
   }
 
   provisioner "local-exec" {
     command = <<EOF
 aws --profile ${var.aws_profile} --region ${data.aws_region.current.name} transfer tag-resource \
-  --arn '${aws_transfer_server.default.arn}' \
+  --arn '${aws_transfer_server.default[0].arn}' \
   --tags \
     Key=aws:transfer:route53HostedZoneId,Value=/hostedzone/${var.zone_id} \
     Key=aws:transfer:customHostname,Value=${var.domain_name}
