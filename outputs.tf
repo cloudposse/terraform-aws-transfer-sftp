@@ -9,8 +9,17 @@ output "transfer_endpoint" {
 }
 
 output "elastic_ips" {
-  description = "Provisioned Elastic IPs"
+  description = "Provisioned Elastic IP IDs"
   value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.id : null
+}
+
+output "elastic_ip_private_ips" {
+  description = "Provisioned Elastic IP private addresses"
+  value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.private_ip : null
+}
+output "elastic_ip_public_ips" {
+  description = "Provisioned Elastic IP public addresses"
+  value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.public_ip : null
 }
 
 output "transfer_id" {
