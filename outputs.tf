@@ -9,7 +9,7 @@ output "transfer_endpoint" {
 }
 output "transfer_vpc_endpoint_details" {
   description = "Transfer server VPC endpoint details"
-  value       = module.this.enabled && local.is_vpc ? join("", aws_transfer_server.default.*.endpoint_details) : null
+  value       = module.this.enabled && local.is_vpc ? aws_transfer_server.default.*.endpoint_details : null
 }
 
 output "elastic_ips" {
