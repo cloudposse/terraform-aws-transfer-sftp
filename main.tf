@@ -147,6 +147,12 @@ module "logging_label" {
   context = module.this.context
 }
 
+resource "aws_cloudwatch_log_group" "transfer_server" {
+  name              = "/aws/transfer/${aws_transfer_server.default[0].id}"
+  retention_in_days = var.log_retention
+  tags              = module.logging_label.tags
+}
+
 data "aws_iam_policy_document" "assume_role_policy" {
   count = local.enabled ? 1 : 0
 

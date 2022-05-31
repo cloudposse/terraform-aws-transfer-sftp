@@ -33,6 +33,12 @@ variable "force_destroy" {
   default     = false
 }
 
+variable "log_retention" {
+  type        = string
+  description = "Transfer server cloudwatch log group retention"
+  default     = "7"
+}
+
 variable "s3_bucket_name" {
   type        = string
   description = "This is the bucket that the SFTP users will use when managing files"
