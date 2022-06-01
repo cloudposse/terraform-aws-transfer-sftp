@@ -148,6 +148,7 @@ module "logging_label" {
 }
 
 resource "aws_cloudwatch_log_group" "transfer_server" {
+  #checkov:skip=CKV_AWS_158:Log encryption not needed
   name              = "/aws/transfer/${aws_transfer_server.default[0].id}"
   retention_in_days = var.log_retention
   tags              = module.logging_label.tags
