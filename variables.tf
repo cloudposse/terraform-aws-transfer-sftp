@@ -1,3 +1,10 @@
+
+variable "aws_profile" {
+  type        = string
+  description = "AWS profile to use for AWS CLI to add DNS tags"
+  default     = ""
+}
+
 variable "domain" {
   type        = string
   description = "Where your files are stored. S3 or EFS"
@@ -24,6 +31,12 @@ variable "force_destroy" {
   type        = bool
   description = "Forces the AWS Transfer Server to be destroyed"
   default     = false
+}
+
+variable "log_retention" {
+  type        = string
+  description = "Transfer server cloudwatch log group retention"
+  default     = "7"
 }
 
 variable "s3_bucket_name" {
@@ -75,8 +88,8 @@ variable "security_group_rules" {
     }
   ]
   description = <<-EOT
-    A list of maps of Security Group rules. 
-    The values of map is fully complated with `aws_security_group_rule` resource. 
+    A list of maps of Security Group rules.
+    The values of map is fully complated with `aws_security_group_rule` resource.
     To get more info see https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule .
   EOT
 }
@@ -121,4 +134,11 @@ variable "eip_enabled" {
   type        = bool
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
+}
+
+
+variable "pre_authentication_login_banner" {
+  type        = string
+  description = "This is pre authentication login banner while connectimg to server"
+  default     = "This system is for the use of authorized Appzen users only."
 }

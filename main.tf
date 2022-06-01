@@ -7,6 +7,8 @@ locals {
   user_names_map         = { for idx, user in local.user_names : idx => user }
 }
 
+data "aws_region" "current" {}
+
 data "aws_s3_bucket" "landing" {
   count = local.enabled ? 1 : 0
 
@@ -15,15 +17,16 @@ data "aws_s3_bucket" "landing" {
 
 resource "aws_transfer_server" "default" {
   count = local.enabled ? 1 : 0
+  depends_on = [aws_eip.sftp]
 
-  identity_provider_type = "SERVICE_MANAGED"
-  protocols              = ["SFTP"]
-  domain                 = var.domain
-  endpoint_type          = local.is_vpc ? "VPC" : "PUBLIC"
-  force_destroy          = var.force_destroy
-  security_policy_name   = var.security_policy_name
-  logging_role           = join("", aws_iam_role.logging[*].arn)
-
+  identity_provider_type          = "SERVICE_MANAGED"
+  protocols                       = ["SFTP"]
+  domain                          = var.domain
+  endpoint_type                   = local.is_vpc ? "VPC" : "PUBLIC"
+  force_destroy                   = var.force_destroy
+  security_policy_name            = var.security_policy_name
+  logging_role                    = join("", aws_iam_role.logging[*].arn)
+  pre_authentication_login_banner = var.pre_authentication_login_banner
   dynamic "endpoint_details" {
     for_each = local.is_vpc ? [1] : []
 
@@ -106,6 +109,36 @@ resource "aws_route53_record" "main" {
   ]
 }
 
+# Add tags for DNS info and link in AWS console
+resource "null_resource" "transfer_server_dns_tags" {
+  count      = local.enabled && length(var.domain_name) > 0 && length(var.zone_id) > 0 ? 1 : 0
+  depends_on = [aws_transfer_server.default, aws_route53_record.main]
+  triggers = {
+    aws_profile         = var.aws_profile
+    aws_region          = data.aws_region.current.name
+    hostname            = var.domain_name
+    zone_id             = var.zone_id
+    transfer_server_arn = aws_transfer_server.default[0].arn
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+aws --profile ${var.aws_profile} --region ${data.aws_region.current.name} transfer tag-resource \
+  --arn '${aws_transfer_server.default[0].arn}' \
+  --tags \
+    Key=aws:transfer:route53HostedZoneId,Value=/hostedzone/${var.zone_id} \
+    Key=aws:transfer:customHostname,Value=${var.domain_name}
+EOF
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOD
+echo "Skip"
+EOD
+  }
+}
+
 module "logging_label" {
   source  = "cloudposse/label/null"
   version = "0.25.0"
@@ -113,6 +146,14 @@ module "logging_label" {
   attributes = ["transfer", "cloudwatch"]
 
   context = module.this.context
+}
+
+resource "aws_cloudwatch_log_group" "transfer_server" {
+  #checkov:skip=CKV_AWS_158:Log encryption not needed
+  count = local.enabled ? 1 : 0
+  name              = "/aws/transfer/${aws_transfer_server.default[0].id}"
+  retention_in_days = var.log_retention
+  tags              = module.logging_label.tags
 }
 
 data "aws_iam_policy_document" "assume_role_policy" {

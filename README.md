@@ -209,6 +209,7 @@ Available targets:
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID that the AWS Transfer Server will be deployed to | `string` | `null` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | A list of security groups IDs that are available to attach to your server's endpoint. If no security groups are specified, the VPC's default security groups are automatically assigned to your endpoint. This property can only be used when endpoint\_type is set to VPC. | `list(string)` | `[]` | no |
 | <a name="input_zone_id"></a> [zone\_id](#input\_zone\_id) | Route53 Zone ID to add the CNAME | `string` | `""` | no |
+| <a name="input_pre_authentication_login_banner"></a> [pre_authentication\_login\_banner](#input\_pre_authentication\_login\_banner) | Pre authentication login banner to add the display banner | `string` | `""` | no |
 
 ## Outputs
 
