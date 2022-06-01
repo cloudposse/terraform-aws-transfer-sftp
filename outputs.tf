@@ -1,6 +1,6 @@
 output "id" {
   description = "Disambiguated ID of the Transfer Server"
-  value       = join("", aws_transfer_server.default.*.id)
+  value       = module.this.enabled ? join("", aws_transfer_server.default.*.id) : null
 }
 
 output "transfer_endpoint" {
