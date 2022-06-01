@@ -85,6 +85,6 @@
 | Name | Description |
 |------|-------------|
 | <a name="output_elastic_ips"></a> [elastic\_ips](#output\_elastic\_ips) | Provisioned Elastic IPs |
-| <a name="output_id"></a> [id](#output\_id) | ID of the created example |
+| <a name="output_id"></a> [id](#output\_id) | Disambiguated ID of the Transfer Server |
 | <a name="output_transfer_endpoint"></a> [transfer\_endpoint](#output\_transfer\_endpoint) | The endpoint of the Transfer Server |
 <!-- markdownlint-restore -->
