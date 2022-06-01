@@ -215,7 +215,7 @@ Available targets:
 | Name | Description |
 |------|-------------|
 | <a name="output_elastic_ips"></a> [elastic\_ips](#output\_elastic\_ips) | Provisioned Elastic IPs |
-| <a name="output_id"></a> [id](#output\_id) | ID of the created example |
+| <a name="output_id"></a> [id](#output\_id) | Disambiguated ID of the Transfer Server |
 | <a name="output_transfer_endpoint"></a> [transfer\_endpoint](#output\_transfer\_endpoint) | The endpoint of the Transfer Server |
 <!-- markdownlint-restore -->
 
@@ -318,7 +318,7 @@ In general, PRs are welcome. We follow the typical "fork-and-pull" Git workflow.
 
 ## Copyrights
 
-Copyright © 2020-2021 [Cloud Posse, LLC](https://cloudposse.com)
+Copyright © 2020-2022 [Cloud Posse, LLC](https://cloudposse.com)
 
 
 
