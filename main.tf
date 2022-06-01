@@ -17,6 +17,7 @@ data "aws_s3_bucket" "landing" {
 
 resource "aws_transfer_server" "default" {
   count = local.enabled ? 1 : 0
+  depends_on = [aws_eip.sftp]
 
   identity_provider_type          = "SERVICE_MANAGED"
   protocols                       = ["SFTP"]
@@ -149,6 +150,7 @@ module "logging_label" {
 
 resource "aws_cloudwatch_log_group" "transfer_server" {
   #checkov:skip=CKV_AWS_158:Log encryption not needed
+  count = local.enabled ? 1 : 0
   name              = "/aws/transfer/${aws_transfer_server.default[0].id}"
   retention_in_days = var.log_retention
   tags              = module.logging_label.tags
