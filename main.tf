@@ -151,9 +151,9 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
 
     actions = [
       "s3:PutObject",
-      #      "s3:GetObject",
-      #      "s3:DeleteObject",
-      #      "s3:DeleteObjectVersion",
+      "s3:GetObject",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
       "s3:GetObjectVersion",
       "s3:GetObjectACL",
       "s3:PutObjectACL"
