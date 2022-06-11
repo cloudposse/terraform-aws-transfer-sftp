@@ -12,3 +12,8 @@ output "elastic_ips" {
   description = "Provisioned Elastic IPs"
   value       = module.this.enabled && var.eip_enabled ? aws_eip.sftp.*.id : null
 }
+
+output "s3_access_role_arns" {
+  description = "Role ARNs for the S3 access"
+  value       = { for idx, user in local.user_names_map : user => aws_iam_role.s3_access_for_sftp_users[idx].arn }
+}

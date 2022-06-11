@@ -47,6 +47,7 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
+  home_directory      = ! var.restricted_home ? "/${var.s3_bucket_name}" : null
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? [1] : []
@@ -159,7 +160,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
-      "${join("", data.aws_s3_bucket.landing[*].arn)}/${each.value}/*"
+      var.restricted_home ? "${join("", data.aws_s3_bucket.landing[*].arn)}/${each.value}/*" : "${join("", data.aws_s3_bucket.landing[*].arn)}/*"
     ]
   }
 }
