@@ -128,3 +128,9 @@ variable "host_key" {
   description = "Host key for ssh"
   default     = ""
 }
+
+variable "s3_bucket_permissions" {
+  type        = list(string)
+  description = "The permissions set on the backing bucket for the user's home directory. Defaults to not allow deletion or downloads."
+  default     = ["s3:PutObject", "s3:PutObjectACL", "s3:GetObjectACL"]
+}
