@@ -1,4 +1,6 @@
 locals {
+  enabled = module.this.enabled
+  
   is_vpc                 = var.vpc_id != null
   security_group_enabled = module.this.enabled && var.security_group_enabled
   user_names             = keys(var.sftp_users)
