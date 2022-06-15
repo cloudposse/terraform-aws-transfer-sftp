@@ -159,3 +159,8 @@ variable kafka_queue {
   type = string
   description = "name of kafka queue to write to"
 }
+
+variable kafka_lambda_enabled {
+  type = bool
+  description = "If a kafka lambda is enabled as part of the workflow"
+}

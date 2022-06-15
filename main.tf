@@ -1,6 +1,4 @@
 locals {
-  enabled = module.this.enabled
-
   is_vpc                 = var.vpc_id != null
   security_group_enabled = module.this.enabled && var.security_group_enabled
   user_names             = keys(var.sftp_users)
@@ -225,6 +223,8 @@ resource "aws_iam_role" "logging" {
 }
 
 resource "aws_iam_role" "sftp_transfer_role" {
+  count = var.kafka_lambda_enabled ? 1 : 0
+
   name = "SFTPTransferRole"
   
   assume_role_policy = <<EOF
@@ -301,6 +301,7 @@ data "aws_region" "current" {}
 
 
 resource "aws_iam_role" "iam_for_lambda" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   name = "push_to_kafka"
 
   assume_role_policy = <<EOF
@@ -378,6 +379,7 @@ EOF
 }
 
 resource "aws_lambda_function" "push_to_kafka" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   function_name = "push_to_kafka"
   filename = var.lambda_zip
   role = aws_iam_role.iam_for_lambda.arn
@@ -396,6 +398,7 @@ resource "aws_lambda_function" "push_to_kafka" {
 }
 
 resource "aws_transfer_workflow" "kafka" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   description = "kafka"
   steps {
     custom_step_details {
