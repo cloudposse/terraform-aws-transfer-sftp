@@ -134,3 +134,28 @@ variable "s3_bucket_permissions" {
   description = "The permissions set on the backing bucket for the user's home directory. Defaults to not allow deletion or downloads."
   default     = ["s3:PutObject", "s3:PutObjectACL", "s3:GetObjectACL", "s3:GetObjectVersion"]
 }
+
+variable "vpc_private_subnet_ids" {
+  type = list(string)
+  description = "List of subnet ids"
+}
+
+variable "lambda_zip" {
+  type = string
+  description = "filename of zip file of lambda function"
+}
+
+variable lambda_handler {
+  type = string
+  description = "entrypoint into lambda function"
+}
+
+variable kafka_rest_server {
+  type = string
+  description = "URI of kafka rest server"
+}
+
+variable kafka_queue {
+  type = string
+  description = "name of kafka queue to write to"
+}

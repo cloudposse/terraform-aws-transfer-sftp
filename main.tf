@@ -35,6 +35,13 @@ resource "aws_transfer_server" "default" {
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
   }
+  workflow_details {
+    on_upload {
+      execution_role = aws_iam_role.sftp_transfer_role.arn
+      workflow_id = aws_transfer_workflow.kafka.id
+    }
+  }
+    
 
   tags = module.this.tags
 }
@@ -216,3 +223,186 @@ resource "aws_iam_role" "logging" {
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [join("", aws_iam_policy.logging[*].arn)]
 }
+
+resource "aws_iam_role" "sftp_transfer_role" {
+  name = "SFTPTransferRole"
+  
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "transfer.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+  inline_policy {
+    name = "AllowTransferToReadAndCallLambda"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+	{
+	  Sid = "ConsoleAccess"
+	  Effect = "Allow"
+	  Action = "s3:GetBucketLocation"
+	  Resource = "*"
+	},
+        {
+	  Sid = "ListObjectsInBucket"
+	  Effect = "Allow"
+	  Action = "s3:ListBucket"
+	  Resource = [
+	    "arn:aws:s3:::${var.s3_bucket_name}"
+	  ]
+        },
+        {
+	  Sid = "AllObjectActions"
+	  Effect = "Allow"
+	  Action = "s3:*Object"
+	  Resource = [
+	    "arn:aws:s3:::${var.s3_bucket_name}/*"
+	  ]
+	},
+        {
+	  Sid = "GetObjectVersion"
+	  Effect = "Allow"
+	  Action = "s3:GetObjectVersion"
+	  Resource = [
+	    "arn:aws:s3:::${var.s3_bucket_name}/*"
+	  ]
+	},
+        {
+	  Sid = "Custom"
+	  Effect = "Allow"
+	  Action = [
+	    "lambda:InvokeFunction"
+	  ]
+	  Resource = [ aws_lambda_function.push_to_kafka.arn ]
+        }
+    ]
+    }
+    )
+  }
+}
+
+resource "aws_cloudwatch_log_group" "push_to_kafka" {
+  name              = "/aws/lambda/push_to_kafka"
+  retention_in_days = 14
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+
+resource "aws_iam_role" "iam_for_lambda" {
+  name = "push_to_kafka"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+  inline_policy {
+    name = "AWSLambdaExecutionRole"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+	{
+	  Effect = "Allow"
+	  Action = "logs:CreateLogGroup"
+	  Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+	},
+        {
+	  Effect = "Allow"
+	  Action = [
+	    "logs:CreateLogStream",
+	    "logs:PutLogEvents"
+	  ]
+	  Resource = [
+	    "${aws_cloudwatch_log_group.push_to_kafka.arn}:*"
+	  ]
+	}
+      ]
+    })
+  }
+  inline_policy {
+    name = "AllowSendWorkflow"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+	  Effect= "Allow"
+	  Action= [
+	    "ec2:DescribeNetworkInterfaces"
+	  ]
+	  Resource= "*"
+        },
+        {
+	  Effect = "Allow"
+	  Action = [
+	    "ec2:CreateNetworkInterface",
+	    "ec2:DeleteNetworkInterface"
+	  ]
+	  Resource = [
+	    "arn:aws:ec2:*:${data.aws_caller_identity.current.account_id}:*/*"
+	  ]
+        },
+        {
+	  Effect = "Allow"
+	  Action = [
+	    "transfer:SendWorkflowStepState"
+	  ]
+	  Resource = [
+	    "arn:aws:transfer:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:workflow/*"
+	  ]
+	}
+      ]
+    })
+  }
+}
+
+resource "aws_lambda_function" "push_to_kafka" {
+  function_name = "push_to_kafka"
+  filename = var.lambda_zip
+  role = aws_iam_role.iam_for_lambda.arn
+  handler = var.lambda_handler
+  runtime = "python3.8"
+  vpc_config {
+    security_group_ids = var.vpc_security_group_ids
+    subnet_ids = var.vpc_private_subnet_ids
+  }
+  environment {
+    variables = {
+      KAFKA_REST_SERVER = var.kafka_rest_server
+      KAFKA_QUEUE = var.kafka_queue
+    }
+  }
+}
+
+resource "aws_transfer_workflow" "kafka" {
+  description = "kafka"
+  steps {
+    custom_step_details {
+      name = "Step0"
+      target = aws_lambda_function.push_to_kafka.arn
+    }
+    type = "CUSTOM"
+  }
+}
+
