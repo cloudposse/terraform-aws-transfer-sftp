@@ -35,11 +35,14 @@ resource "aws_transfer_server" "default" {
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
   }
-  workflow_details {
-    count = var.kafka_lambda_enabled ? 1 : 0
-    on_upload {
-      execution_role = aws_iam_role.sftp_transfer_role[count.index].arn
-      workflow_id = aws_transfer_workflow.kafka[count.index].id
+  dynamic workflow_details {
+    for_each = var.kafka_lambda_enabled ? [1] : []
+    
+    content {
+      on_upload {
+        execution_role = aws_iam_role.sftp_transfer_role[count.index].arn
+        workflow_id = aws_transfer_workflow.kafka[count.index].id
+      }
     }
   }
     
