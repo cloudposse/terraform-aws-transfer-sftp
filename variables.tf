@@ -159,3 +159,4 @@ variable kafka_queue {
   type = string
   description = "name of kafka queue to write to"
 }
+
