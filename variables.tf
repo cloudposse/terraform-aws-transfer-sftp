@@ -138,24 +138,35 @@ variable "s3_bucket_permissions" {
 variable "vpc_private_subnet_ids" {
   type = list(string)
   description = "List of subnet ids"
+  default = []
 }
 
 variable "lambda_zip" {
   type = string
   description = "filename of zip file of lambda function"
+  default = ""
 }
 
 variable lambda_handler {
   type = string
   description = "entrypoint into lambda function"
+  default = ""
 }
 
 variable kafka_rest_server {
   type = string
   description = "URI of kafka rest server"
+  default = ""
 }
 
 variable kafka_queue {
   type = string
   description = "name of kafka queue to write to"
+  default = ""
+}
+
+variable kafka_lambda_enabled {
+  type = bool
+  description = "If a kafka lambda is enabled as part of the workflow"
+  default = true
 }
