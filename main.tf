@@ -36,10 +36,14 @@ resource "aws_transfer_server" "default" {
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
   }
-  workflow_details {
-    on_upload {
-      execution_role = aws_iam_role.sftp_transfer_role.arn
-      workflow_id = aws_transfer_workflow.kafka.id
+  dynamic workflow_details {
+    for_each = var.kafka_lambda_enabled ? [1] : []
+    
+    content {
+      on_upload {
+        execution_role = aws_iam_role.sftp_transfer_role[count.index].arn
+        workflow_id = aws_transfer_workflow.kafka[count.index].id
+      }
     }
   }
     
@@ -245,6 +249,8 @@ resource "aws_iam_role" "logging" {
 }
 
 resource "aws_iam_role" "sftp_transfer_role" {
+  count = var.kafka_lambda_enabled ? 1 : 0
+
   name = "SFTPTransferRole"
   
   assume_role_policy = <<EOF
@@ -303,7 +309,7 @@ EOF
 	  Action = [
 	    "lambda:InvokeFunction"
 	  ]
-	  Resource = [ aws_lambda_function.push_to_kafka.arn ]
+	  Resource = [ aws_lambda_function.push_to_kafka[count.index].arn ]
         }
     ]
     }
@@ -321,6 +327,7 @@ data "aws_region" "current" {}
 
 
 resource "aws_iam_role" "iam_for_lambda" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   name = "push_to_kafka"
 
   assume_role_policy = <<EOF
@@ -398,9 +405,10 @@ EOF
 }
 
 resource "aws_lambda_function" "push_to_kafka" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   function_name = "push_to_kafka"
   filename = var.lambda_zip
-  role = aws_iam_role.iam_for_lambda.arn
+  role = aws_iam_role.iam_for_lambda[count.index].arn
   handler = var.lambda_handler
   runtime = "python3.8"
   vpc_config {
@@ -416,11 +424,12 @@ resource "aws_lambda_function" "push_to_kafka" {
 }
 
 resource "aws_transfer_workflow" "kafka" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   description = "kafka"
   steps {
     custom_step_details {
       name = "Step0"
-      target = aws_lambda_function.push_to_kafka.arn
+      target = aws_lambda_function.push_to_kafka[count.index].arn
     }
     type = "CUSTOM"
   }
