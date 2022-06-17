@@ -7,7 +7,8 @@ variable "domain" {
 variable "sftp_users" {
   type = map(object({
     user_name  = string,
-    public_key = string
+    public_key = string,
+    unix_uid   = number,
   }))
 
   default     = {}

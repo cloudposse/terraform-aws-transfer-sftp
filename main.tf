@@ -70,6 +70,16 @@ resource "aws_transfer_user" "default" {
     }
   }
 
+  dynamic "posix_profile" {
+    for_each = local.is_s3 ? [] : [1]
+
+    content {
+      gid = 0
+      uid = each.value.unix_uid
+    }
+  }
+      
+
   tags = module.this.tags
 }
 
@@ -318,6 +328,7 @@ EOF
 }
 
 resource "aws_cloudwatch_log_group" "push_to_kafka" {
+  count = var.kafka_lambda_enabled ? 1 : 0
   name = "/aws/lambda/${module.this.id}/push_to_kafka"
   retention_in_days = 14
 }
@@ -362,7 +373,7 @@ EOF
 	    "logs:PutLogEvents"
 	  ]
 	  Resource = [
-	    "${aws_cloudwatch_log_group.push_to_kafka.arn}:*"
+	    "${aws_cloudwatch_log_group.push_to_kafka[0].arn}:*"
 	  ]
 	}
       ]
