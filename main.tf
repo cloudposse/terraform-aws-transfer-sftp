@@ -97,7 +97,7 @@ module "security_group" {
   rules                      = var.additional_security_group_rules
   rule_matrix = [
     {
-      source_security_group_ids = local.allowed_security_group_ids
+      source_security_group_ids = var.allowed_security_group_ids
       cidr_blocks               = var.allowed_cidr_blocks
       rules = [
         {
