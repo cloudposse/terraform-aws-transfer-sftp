@@ -78,18 +78,41 @@ resource "aws_eip" "sftp" {
   count = local.enabled && var.eip_enabled ? length(var.subnet_ids) : 0
 
   vpc = local.is_vpc
+
+  tags = module.this.tags
 }
 
 module "security_group" {
   source  = "cloudposse/security-group/aws"
-  version = "0.3.1"
+  version = "1.0.1"
 
-  use_name_prefix = var.security_group_use_name_prefix
-  rules           = var.security_group_rules
-  description     = var.security_group_description
-  vpc_id          = local.is_vpc ? var.vpc_id : null
+  enabled                       = local.security_group_enabled
+  security_group_name           = var.security_group_name
+  create_before_destroy         = var.security_group_create_before_destroy
+  security_group_create_timeout = var.security_group_create_timeout
+  security_group_delete_timeout = var.security_group_delete_timeout
 
-  enabled = local.security_group_enabled
+  security_group_description = var.security_group_description
+  allow_all_egress           = true
+  rules                      = var.additional_security_group_rules
+  rule_matrix = [
+    {
+      source_security_group_ids = local.allowed_security_group_ids
+      cidr_blocks               = var.allowed_cidr_blocks
+      rules = [
+        {
+          key         = "in"
+          type        = "ingress"
+          from_port   = 22
+          to_port     = 22
+          protocol    = "tcp"
+          description = "Allow ingress EFS traffic"
+        }
+      ]
+    }
+  ]
+  vpc_id = local.is_vpc ? var.vpc_id : null
+
   context = module.this.context
 }
 
@@ -199,6 +222,8 @@ resource "aws_iam_policy" "s3_access_for_sftp_users" {
 
   name   = module.iam_label[index(local.user_names, each.value)].id
   policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_role" "s3_access_for_sftp_users" {
@@ -208,6 +233,8 @@ resource "aws_iam_role" "s3_access_for_sftp_users" {
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[index(local.user_names, each.value)].arn]
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_policy" "logging" {
@@ -215,6 +242,8 @@ resource "aws_iam_policy" "logging" {
 
   name   = module.logging_label.id
   policy = join("", data.aws_iam_policy_document.logging[*].json)
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_role" "logging" {
@@ -223,4 +252,6 @@ resource "aws_iam_role" "logging" {
   name                = module.logging_label.id
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [join("", aws_iam_policy.logging[*].arn)]
+
+  tags = module.this.tags
 }

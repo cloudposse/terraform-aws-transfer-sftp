@@ -71,10 +71,19 @@ usage: |-
   For automated tests of the complete example using [bats](https://github.com/bats-core/bats-core) and [Terratest](https://github.com/gruntwork-io/terratest)
   (which tests and deploys the example on AWS), see [test](test).
 
+  **NOTE**: Release `0.7.0` contains breaking changes. To preserve the SG, follow the instructions in the [0.6.0 to 0.7.x+ migration path](./docs/migration-0.6.0-0.7.x+.md).
+
   ```hcl
-  module "example" {
-    source = "https://github.com/cloudposse/terraform-aws-transfer-sftp.git?ref=master"
-    example = "Hello world!"
+  module "sftp" {
+    source = "cloudposse/sftp-transfer/aws"
+    # Cloud Posse recommends pinning every module to a specific version
+    # version     = "x.x.x"
+
+    sftp_users = var.sftp_users
+
+    s3_bucket_name = module.s3_bucket.bucket_id
+
+    context = module.this.context
   }
   ```
 
@@ -96,3 +105,5 @@ include:
 contributors:
   - name: "Erik Osterman"
     github: "osterman"
+  - name: "RB"
+    github: "nitrocode"
