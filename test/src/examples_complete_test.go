@@ -76,7 +76,6 @@ func TestVPC(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// Run `terraform output` to get the value of an output variable
-	id := terraform.Output(t, terraformOptions, "id")
 	transfer_endpoint := terraform.Output(t, terraformOptions, "transfer_endpoint")
 
 	// Verify we're getting back the outputs we expect
