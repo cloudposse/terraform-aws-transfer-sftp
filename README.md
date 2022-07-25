@@ -239,7 +239,7 @@ Available targets:
 | Name | Description |
 |------|-------------|
 | <a name="output_elastic_ips"></a> [elastic\_ips](#output\_elastic\_ips) | Provisioned Elastic IPs |
-| <a name="output_id"></a> [id](#output\_id) | ID of the created example |
+| <a name="output_id"></a> [id](#output\_id) | The ID of the Transfer Server |
 | <a name="output_s3_access_role_arns"></a> [s3\_access\_role\_arns](#output\_s3\_access\_role\_arns) | Role ARNs for the S3 access |
 | <a name="output_security_group_arn"></a> [security\_group\_arn](#output\_security\_group\_arn) | The ARN of the created security group |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The ID of the created security group |
