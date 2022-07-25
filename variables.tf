@@ -32,12 +32,6 @@ variable "s3_bucket_name" {
 }
 
 # Variables used when deploying to VPC
-variable "vpc_id" {
-  type        = string
-  description = "VPC ID that the AWS Transfer Server will be deployed to"
-  default     = null
-}
-
 variable "address_allocation_ids" {
   type        = list(string)
   description = "A list of address allocation IDs that are required to attach an Elastic IP address to your SFTP server's endpoint. This property can only be used when endpoint_type is set to VPC."
