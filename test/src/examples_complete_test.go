@@ -13,7 +13,7 @@ import (
 )
 
 // Test the Terraform module in examples/complete using Terratest.
-func TestExamplesComplete(t *testing.T) {
+func TestComplete(t *testing.T) {
 	t.Parallel()
 
 	rand.Seed(time.Now().UnixNano())
@@ -39,7 +39,6 @@ func TestExamplesComplete(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// Run `terraform output` to get the value of an output variable
-	id := terraform.Output(t, terraformOptions, "id")
 	transfer_endpoint := terraform.Output(t, terraformOptions, "transfer_endpoint")
 
 	// Verify we're getting back the outputs we expect
@@ -48,29 +47,10 @@ func TestExamplesComplete(t *testing.T) {
 	assert.True(t,
 		strings.HasSuffix(transfer_endpoint, expectedTransferEndpoint),
 		fmt.Sprintf("Transfer endpoint should end with %v", expectedTransferEndpoint))
-
-	// Ensure we get the attribute included in the ID
-	assert.Equal(t, "eg-ue2-test-example-"+randID, id)
-
-	// ************************************************************************
-	// This steps below are unusual, not generally part of the testing
-	// but included here as an example of testing this specific module.
-	// This module has a random number that is supposed to change
-	// only when the example changes. So we run it again to ensure
-	// it does not change.
-
-	// This will run `terraform apply` a second time and fail the test if there are any errors
-	terraform.Apply(t, terraformOptions)
-
-	id2 := terraform.Output(t, terraformOptions, "id")
-	transfer_endpoint2 := terraform.Output(t, terraformOptions, "transfer_endpoint")
-
-	assert.Equal(t, id, id2, "Expected `id` to be stable")
-	assert.Equal(t, transfer_endpoint, transfer_endpoint2, "Expected `transfer_endpoint` to be stable")
 }
 
 // Test the Terraform module in examples/vpc using Terratest.
-func TestExamplesVPC(t *testing.T) {
+func TestVPC(t *testing.T) {
 	t.Parallel()
 
 	rand.Seed(time.Now().UnixNano())
@@ -105,23 +85,4 @@ func TestExamplesVPC(t *testing.T) {
 	assert.True(t,
 		strings.HasSuffix(transfer_endpoint, expectedTransferEndpoint),
 		fmt.Sprintf("Transfer endpoint should end with %v", expectedTransferEndpoint))
-
-	// Ensure we get the attribute included in the ID
-	assert.Equal(t, "eg-ue2-test-example-"+randID, id)
-
-	// ************************************************************************
-	// This steps below are unusual, not generally part of the testing
-	// but included here as an example of testing this specific module.
-	// This module has a random number that is supposed to change
-	// only when the example changes. So we run it again to ensure
-	// it does not change.
-
-	// This will run `terraform apply` a second time and fail the test if there are any errors
-	terraform.Apply(t, terraformOptions)
-
-	id2 := terraform.Output(t, terraformOptions, "id")
-	transfer_endpoint2 := terraform.Output(t, terraformOptions, "transfer_endpoint")
-
-	assert.Equal(t, id, id2, "Expected `id` to be stable")
-	assert.Equal(t, transfer_endpoint, transfer_endpoint2, "Expected `transfer_endpoint` to be stable")
 }
