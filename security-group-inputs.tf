@@ -176,7 +176,8 @@ variable "additional_security_group_rules" {
 ## it should be defined in the main `variables.tf` file, not here.
 variable "vpc_id" {
   type        = string
-  description = "The ID of the VPC where the Security Group will be created."
+  description = "The ID of the VPC where the AWS Transfer Server will be deployed to and where the Security Group will be created."
+  default     = null
 }
 
 
