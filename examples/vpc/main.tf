@@ -34,11 +34,11 @@ module "s3_bucket" {
   context = module.this.context
 }
 
-module "example" {
+module "sftp" {
   source = "../.."
 
   eip_enabled            = true
-  security_group_enabled = true
+  create_security_group  = true
   security_group_rules = [{
     type        = "ingress"
     from_port   = 22

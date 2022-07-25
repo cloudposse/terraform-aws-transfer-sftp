@@ -2,7 +2,7 @@ locals {
   enabled = module.this.enabled
 
   is_vpc                 = var.vpc_id != null
-  security_group_enabled = module.this.enabled && var.security_group_enabled
+  security_group_enabled = module.this.enabled && var.create_security_group
   user_names             = keys(var.sftp_users)
   user_names_map         = { for idx, user in local.user_names : idx => user }
 }

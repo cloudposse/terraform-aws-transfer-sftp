@@ -13,7 +13,7 @@ module "s3_bucket" {
   context = module.this.context
 }
 
-module "example" {
+module "sftp" {
   source = "../.."
 
   sftp_users = var.sftp_users
