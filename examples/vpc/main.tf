@@ -37,8 +37,8 @@ module "s3_bucket" {
 module "sftp" {
   source = "../.."
 
-  eip_enabled            = true
-  create_security_group  = true
+  eip_enabled           = true
+  create_security_group = true
   security_group_rules = [{
     type        = "ingress"
     from_port   = 22
