@@ -2,7 +2,7 @@ locals {
   enabled = module.this.enabled
 
   is_vpc                 = var.vpc_id != null
-  security_group_enabled = module.this.enabled && var.create_security_group
+  security_group_enabled = module.this.enabled && var.create_security_group && local.is_vpc
   user_names             = keys(var.sftp_users)
   user_names_map         = { for idx, user in local.user_names : idx => user }
 }
@@ -83,8 +83,9 @@ resource "aws_eip" "sftp" {
 }
 
 module "security_group" {
-  source  = "cloudposse/security-group/aws"
-  version = "1.0.1"
+  source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=2.0.0-rc1"
+  # source  = "cloudposse/security-group/aws"
+  # version = "1.0.1"
 
   enabled                       = local.security_group_enabled
   security_group_name           = var.security_group_name
