@@ -157,7 +157,7 @@ Available targets:
 |------|--------|---------|
 | <a name="module_iam_label"></a> [iam\_label](#module\_iam\_label) | cloudposse/label/null | 0.25.0 |
 | <a name="module_logging_label"></a> [logging\_label](#module\_logging\_label) | cloudposse/label/null | 0.25.0 |
-| <a name="module_security_group"></a> [security\_group](#module\_security\_group) | git::https://github.com/cloudposse/terraform-aws-security-group | 2.0.0-rc1 |
+| <a name="module_security_group"></a> [security\_group](#module\_security\_group) | git::https://github.com/cloudposse/terraform-aws-security-group | fix-empty-target_security_group_id |
 | <a name="module_this"></a> [this](#module\_this) | cloudposse/label/null | 0.25.0 |
 
 ## Resources

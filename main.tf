@@ -86,7 +86,8 @@ resource "aws_eip" "sftp" {
 }
 
 module "security_group" {
-  source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=2.0.0-rc1"
+  source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=fix-empty-target_security_group_id"
+  # source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=2.0.0-rc1"
   # source  = "cloudposse/security-group/aws"
   # version = "1.0.1"
 
