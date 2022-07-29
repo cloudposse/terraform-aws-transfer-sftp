@@ -109,7 +109,7 @@ variable "security_group_create_before_destroy" {
     that you do not want replaced and therefore need full control over its name.
     Note that changing this value will always cause the security group to be replaced.
     EOT
-  default     = false
+  default     = true
 }
 
 variable "preserve_security_group_id" {
@@ -200,15 +200,15 @@ variable "vpc_id" {
 ## and passing it in as the target security group.
 #############################################################################################
 
-variable "inline_rules_enabled" {
-  type        = bool
-  description = <<-EOT
-    NOT RECOMMENDED. Create rules "inline" instead of as separate `aws_security_group_rule` resources.
-    See [#20046](https://github.com/hashicorp/terraform-provider-aws/issues/20046) for one of several issues with inline rules.
-    See [this post](https://github.com/hashicorp/terraform-provider-aws/pull/9032#issuecomment-639545250) for details on the difference between inline rules and rule resources.
-    EOT
-  default     = false
-}
+# variable "inline_rules_enabled" {
+#   type        = bool
+#   description = <<-EOT
+#     NOT RECOMMENDED. Create rules "inline" instead of as separate `aws_security_group_rule` resources.
+#     See [#20046](https://github.com/hashicorp/terraform-provider-aws/issues/20046) for one of several issues with inline rules.
+#     See [this post](https://github.com/hashicorp/terraform-provider-aws/pull/9032#issuecomment-639545250) for details on the difference between inline rules and rule resources.
+#     EOT
+#   default     = false
+# }
 
 # variable "revoke_security_group_rules_on_delete" {
 #   type        = bool

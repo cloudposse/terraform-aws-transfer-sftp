@@ -86,8 +86,7 @@ resource "aws_eip" "sftp" {
 }
 
 module "security_group" {
-  source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=fix-empty-target_security_group_id"
-  # source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=2.0.0-rc1"
+  source = "git::https://github.com/cloudposse/terraform-aws-security-group?ref=2.0.0-rc1"
   # source  = "cloudposse/security-group/aws"
   # version = "1.0.1"
 
@@ -97,7 +96,6 @@ module "security_group" {
   security_group_create_timeout = var.security_group_create_timeout
   security_group_delete_timeout = var.security_group_delete_timeout
   security_group_description    = var.security_group_description
-  inline_rules_enabled          = var.inline_rules_enabled
   preserve_security_group_id    = var.preserve_security_group_id
   allow_all_egress              = var.allow_all_egress
 
