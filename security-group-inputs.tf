@@ -63,23 +63,23 @@ variable "allowed_cidr_blocks" {
   default     = []
 }
 
-variable "allowed_ipv6_cidr_blocks" {
-  type        = list(string)
-  description = <<-EOT
-    A list of IPv6 CIDRs to allow access to the security group created by this module.
-    The length of this list must be known at "plan" time.
-    EOT
-  default     = []
-}
+# variable "allowed_ipv6_cidr_blocks" {
+#   type        = list(string)
+#   description = <<-EOT
+#     A list of IPv6 CIDRs to allow access to the security group created by this module.
+#     The length of this list must be known at "plan" time.
+#     EOT
+#   default     = []
+# }
 
-variable "allowed_ipv6_prefix_list_ids" {
-  type        = list(string)
-  description = <<-EOT
-    A list of IPv6 Prefix Lists IDs to allow access to the security group created by this module.
-    The length of this list must be known at "plan" time.
-    EOT
-  default     = []
-}
+# variable "allowed_ipv6_prefix_list_ids" {
+#   type        = list(string)
+#   description = <<-EOT
+#     A list of IPv6 Prefix Lists IDs to allow access to the security group created by this module.
+#     The length of this list must be known at "plan" time.
+#     EOT
+#   default     = []
+# }
 ## End of optional allowed_* ###########
 
 variable "security_group_name" {
@@ -109,7 +109,7 @@ variable "security_group_create_before_destroy" {
     that you do not want replaced and therefore need full control over its name.
     Note that changing this value will always cause the security group to be replaced.
     EOT
-  default     = true
+  default     = false
 }
 
 variable "preserve_security_group_id" {
@@ -210,14 +210,14 @@ variable "inline_rules_enabled" {
   default     = false
 }
 
-variable "revoke_security_group_rules_on_delete" {
-  type        = bool
-  description = <<-EOT
-    Instruct Terraform to revoke all of the Security Group's attached ingress and egress rules before deleting
-    the security group itself. This is normally not needed.
-    EOT
-  default     = false
-}
+# variable "revoke_security_group_rules_on_delete" {
+#   type        = bool
+#   description = <<-EOT
+#     Instruct Terraform to revoke all of the Security Group's attached ingress and egress rules before deleting
+#     the security group itself. This is normally not needed.
+#     EOT
+#   default     = false
+# }
 
 
 ##

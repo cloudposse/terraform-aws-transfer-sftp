@@ -1,8 +1,10 @@
 locals {
   enabled = module.this.enabled
 
-  is_vpc                 = var.vpc_id != null
-  security_group_enabled = module.this.enabled && var.create_security_group && local.is_vpc
+  is_vpc        = var.vpc_id != null
+  endpoint_type = var.vpc_endpoint_id != null ? "VPC_ENDPOINT" : (local.is_vpc ? "VPC" : "PUBLIC")
+
+  security_group_enabled = module.this.enabled && (var.create_security_group && var.security_group_enabled) && local.is_vpc
   user_names             = keys(var.sftp_users)
   user_names_map         = { for idx, user in local.user_names : idx => user }
 }
@@ -19,7 +21,7 @@ resource "aws_transfer_server" "default" {
   identity_provider_type = "SERVICE_MANAGED"
   protocols              = ["SFTP"]
   domain                 = var.domain
-  endpoint_type          = local.is_vpc ? "VPC" : "PUBLIC"
+  endpoint_type          = local.endpoint_type
   force_destroy          = var.force_destroy
   security_policy_name   = var.security_policy_name
   logging_role           = join("", aws_iam_role.logging[*].arn)
@@ -29,9 +31,10 @@ resource "aws_transfer_server" "default" {
 
     content {
       subnet_ids             = var.subnet_ids
-      security_group_ids     = local.security_group_enabled ? module.security_group.*.id : var.vpc_security_group_ids
+      security_group_ids     = local.security_group_enabled ? module.security_group.*.id : concat(var.associated_security_group_ids, var.vpc_security_group_ids)
       vpc_id                 = var.vpc_id
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
+      vpc_endpoint_id        = var.vpc_endpoint_id
     }
   }
 
@@ -92,10 +95,12 @@ module "security_group" {
   create_before_destroy         = var.security_group_create_before_destroy
   security_group_create_timeout = var.security_group_create_timeout
   security_group_delete_timeout = var.security_group_delete_timeout
+  security_group_description    = var.security_group_description
+  inline_rules_enabled          = var.inline_rules_enabled
+  preserve_security_group_id    = var.preserve_security_group_id
+  allow_all_egress              = var.allow_all_egress
 
-  security_group_description = var.security_group_description
-  allow_all_egress           = true
-  rules                      = var.additional_security_group_rules
+  rules = var.additional_security_group_rules
   rule_matrix = [
     {
       source_security_group_ids = var.allowed_security_group_ids
