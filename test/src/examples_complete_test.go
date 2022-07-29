@@ -2,38 +2,45 @@ package test
 
 import (
 	"fmt"
-	"math/rand"
-	"strconv"
+	"github.com/gruntwork-io/terratest/modules/random"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+	testStructure "github.com/gruntwork-io/terratest/modules/test-structure"
+	"github.com/stretchr/testify/assert"
+	"os"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/gruntwork-io/terratest/modules/terraform"
-	"github.com/stretchr/testify/assert"
 )
+
+func cleanup(t *testing.T, terraformOptions *terraform.Options, tempTestFolder string) {
+	terraform.Destroy(t, terraformOptions)
+	os.RemoveAll(tempTestFolder)
+}
 
 // Test the Terraform module in examples/complete using Terratest.
 func TestExamplesComplete(t *testing.T) {
 	t.Parallel()
-
-	rand.Seed(time.Now().UnixNano())
-	randID := strconv.Itoa(rand.Intn(100000))
+	randID := strings.ToLower(random.UniqueId())
 	attributes := []string{randID}
+
+	rootFolder := "../../"
+	terraformFolderRelativeToRoot := "examples/complete"
+	varFiles := []string{"fixtures.us-east-2.tfvars"}
+
+	tempTestFolder := testStructure.CopyTerraformFolderToTemp(t, rootFolder, terraformFolderRelativeToRoot)
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
-		TerraformDir: "../../examples/complete",
+		TerraformDir: tempTestFolder,
 		Upgrade:      true,
 		// Variables to pass to our Terraform code using -var-file options
-		VarFiles: []string{"fixtures.us-east-2.tfvars"},
-		// We always include a random attribute so that parallel tests
-		// and AWS resources do not interfere with each other
+		VarFiles: varFiles,
 		Vars: map[string]interface{}{
 			"attributes": attributes,
 		},
 	}
+
 	// At the end of the test, run `terraform destroy` to clean up any resources that were created
-	defer terraform.Destroy(t, terraformOptions)
+	defer cleanup(t, terraformOptions, tempTestFolder)
 
 	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
 	terraform.InitAndApply(t, terraformOptions)
@@ -50,7 +57,7 @@ func TestExamplesComplete(t *testing.T) {
 		fmt.Sprintf("Transfer endpoint should end with %v", expectedTransferEndpoint))
 
 	// Ensure we get the attribute included in the ID
-	assert.Equal(t, "eg-ue2-test-example-"+randID, id)
+	assert.Equal(t, "eg-ue2-test-sftp-"+randID, id)
 
 	// ************************************************************************
 	// This steps below are unusual, not generally part of the testing
@@ -72,25 +79,28 @@ func TestExamplesComplete(t *testing.T) {
 // Test the Terraform module in examples/vpc using Terratest.
 func TestExamplesVPC(t *testing.T) {
 	t.Parallel()
-
-	rand.Seed(time.Now().UnixNano())
-	randID := strconv.Itoa(rand.Intn(100000))
+	randID := strings.ToLower(random.UniqueId())
 	attributes := []string{randID}
+
+	rootFolder := "../../"
+	terraformFolderRelativeToRoot := "examples/vpc"
+	varFiles := []string{"fixtures.us-east-2.tfvars"}
+
+	tempTestFolder := testStructure.CopyTerraformFolderToTemp(t, rootFolder, terraformFolderRelativeToRoot)
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
-		TerraformDir: "../../examples/vpc",
+		TerraformDir: tempTestFolder,
 		Upgrade:      true,
 		// Variables to pass to our Terraform code using -var-file options
-		VarFiles: []string{"fixtures.us-east-2.tfvars"},
-		// We always include a random attribute so that parallel tests
-		// and AWS resources do not interfere with each other
+		VarFiles: varFiles,
 		Vars: map[string]interface{}{
 			"attributes": attributes,
 		},
 	}
+
 	// At the end of the test, run `terraform destroy` to clean up any resources that were created
-	defer terraform.Destroy(t, terraformOptions)
+	defer cleanup(t, terraformOptions, tempTestFolder)
 
 	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
 	terraform.InitAndApply(t, terraformOptions)
@@ -107,7 +117,7 @@ func TestExamplesVPC(t *testing.T) {
 		fmt.Sprintf("Transfer endpoint should end with %v", expectedTransferEndpoint))
 
 	// Ensure we get the attribute included in the ID
-	assert.Equal(t, "eg-ue2-test-example-"+randID, id)
+	assert.Equal(t, "eg-ue2-test-sftp-"+randID, id)
 
 	// ************************************************************************
 	// This steps below are unusual, not generally part of the testing

@@ -1,10 +1,9 @@
 locals {
   enabled = module.this.enabled
 
-  is_vpc                 = var.vpc_id != null
-  security_group_enabled = module.this.enabled && var.security_group_enabled
-  user_names             = keys(var.sftp_users)
-  user_names_map         = { for idx, user in local.user_names : idx => user }
+  is_vpc         = var.vpc_id != null
+  user_names     = keys(var.sftp_users)
+  user_names_map = { for idx, user in local.user_names : idx => user }
 }
 
 data "aws_s3_bucket" "landing" {
@@ -29,7 +28,7 @@ resource "aws_transfer_server" "default" {
 
     content {
       subnet_ids             = var.subnet_ids
-      security_group_ids     = local.security_group_enabled ? module.security_group.*.id : var.vpc_security_group_ids
+      security_group_ids     = var.vpc_security_group_ids
       vpc_id                 = var.vpc_id
       address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
     }
@@ -47,7 +46,7 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
-  home_directory      = ! var.restricted_home ? "/${var.s3_bucket_name}" : null
+  home_directory      = !var.restricted_home ? "/${var.s3_bucket_name}" : null
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? [1] : []
@@ -78,19 +77,6 @@ resource "aws_eip" "sftp" {
   count = local.enabled && var.eip_enabled ? length(var.subnet_ids) : 0
 
   vpc = local.is_vpc
-}
-
-module "security_group" {
-  source  = "cloudposse/security-group/aws"
-  version = "0.3.1"
-
-  use_name_prefix = var.security_group_use_name_prefix
-  rules           = var.security_group_rules
-  description     = var.security_group_description
-  vpc_id          = local.is_vpc ? var.vpc_id : null
-
-  enabled = local.security_group_enabled
-  context = module.this.context
 }
 
 # Custom Domain
