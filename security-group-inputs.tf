@@ -63,23 +63,23 @@ variable "allowed_cidr_blocks" {
   default     = []
 }
 
-# variable "allowed_ipv6_cidr_blocks" {
-#   type        = list(string)
-#   description = <<-EOT
-#     A list of IPv6 CIDRs to allow access to the security group created by this module.
-#     The length of this list must be known at "plan" time.
-#     EOT
-#   default     = []
-# }
+variable "allowed_ipv6_cidr_blocks" {
+  type        = list(string)
+  description = <<-EOT
+    A list of IPv6 CIDRs to allow access to the security group created by this module.
+    The length of this list must be known at "plan" time.
+    EOT
+  default     = []
+}
 
-# variable "allowed_ipv6_prefix_list_ids" {
-#   type        = list(string)
-#   description = <<-EOT
-#     A list of IPv6 Prefix Lists IDs to allow access to the security group created by this module.
-#     The length of this list must be known at "plan" time.
-#     EOT
-#   default     = []
-# }
+variable "allowed_ipv6_prefix_list_ids" {
+  type        = list(string)
+  description = <<-EOT
+    A list of IPv6 Prefix Lists IDs to allow access to the security group created by this module.
+    The length of this list must be known at "plan" time.
+    EOT
+  default     = []
+}
 ## End of optional allowed_* ###########
 
 variable "security_group_name" {
