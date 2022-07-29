@@ -6,7 +6,11 @@ environment = "ue2"
 
 stage = "test"
 
-name = "example"
+name = "sftp"
+
+availability_zones = ["us-east-2a", "us-east-2b"]
+
+cidr_block = "10.0.0.0/16"
 
 sftp_users = {
   "brad" = {

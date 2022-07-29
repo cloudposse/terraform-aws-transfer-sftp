@@ -2,33 +2,38 @@ provider "aws" {
   region = var.region
 }
 
+provider "awsutils" {
+  region = var.region
+}
+
+
 module "vpc" {
   source  = "cloudposse/vpc/aws"
-  version = "0.25.0"
+  version = "1.1.0"
 
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.cidr_block
 
   context = module.this.context
 }
 
-module "dynamic_subnets" {
+module "subnets" {
   source  = "cloudposse/dynamic-subnets/aws"
-  version = "0.39.3"
+  version = "2.0.2"
 
-  availability_zones = ["us-east-2a", "us-east-2b"]
-  vpc_id             = module.vpc.vpc_id
-  igw_id             = module.vpc.igw_id
-  cidr_block         = "10.0.0.0/16"
+  availability_zones   = var.availability_zones
+  vpc_id               = module.vpc.vpc_id
+  igw_id               = [module.vpc.igw_id]
+  ipv4_cidr_block      = [module.vpc.vpc_cidr_block]
+  max_nats             = 1
+  nat_gateway_enabled  = true
+  nat_instance_enabled = false
 
   context = module.this.context
 }
 
 module "security_group" {
-  source          = "cloudposse/security-group/aws"
-  version         = "0.3.1"
-  environment     = "test"
-  id_length_limit = null
-  label_key_case  = "title"
+  source  = "cloudposse/security-group/aws"
+  version = "1.0.1"
 
   vpc_id = module.vpc.vpc_id
   rules = [
@@ -46,24 +51,26 @@ module "security_group" {
 
 module "s3_bucket" {
   source             = "cloudposse/s3-bucket/aws"
-  version            = "0.41.0"
+  version            = "2.0.3"
   acl                = "private"
   enabled            = true
   user_enabled       = false
   versioning_enabled = false
+  force_destroy      = true
 
   context = module.this.context
 }
+
 
 module "example" {
   source = "../.."
 
   eip_enabled            = true
-  s3_bucket_name = module.s3_bucket.bucket_id
-  sftp_users     = var.sftp_users
-  subnet_ids      = [module.dynamic_subnets.public_subnet_ids[1]]
-  vpc_id         = module.vpc.vpc_id
-  restricted_home = true
+  s3_bucket_name         = module.s3_bucket.bucket_id
+  sftp_users             = var.sftp_users
+  subnet_ids             = [module.subnets.public_subnet_ids[1]]
+  vpc_id                 = module.vpc.vpc_id
+  restricted_home        = true
   vpc_security_group_ids = [module.security_group.id]
 
   context = module.this.context
