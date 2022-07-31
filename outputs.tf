@@ -1,11 +1,6 @@
 output "id" {
-  description = "The null label ID passed to each resource"
+  description = "ID of the created example"
   value       = module.this.enabled ? module.this.id : null
-}
-
-output "transfer_server_id" {
-  description = "The ID of the Transfer Server"
-  value       = module.this.enabled ? join("", aws_transfer_server.default.*.id) : null
 }
 
 output "transfer_endpoint" {

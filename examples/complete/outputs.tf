@@ -1,5 +1,5 @@
 output "id" {
-  description = "The null label ID passed to each resource"
+  description = "ID of the created example"
   value       = module.sftp.id
 }
 
