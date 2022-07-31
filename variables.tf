@@ -85,3 +85,18 @@ variable "eip_enabled" {
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
 }
+
+variable "home_directory" {
+  type        = string
+  description = "The home directory if `restricted_home` is `true`. The default uses the format `/{var.s3_bucket_name}`."
+  default     = null
+}
+
+variable "home_directory_mappings" {
+  type = map(object({
+    entry  = string,
+    target = string
+  }))
+  description = "The home directory mappings if `restricted_home` is `true`. The default value can be overridden by using the key `default`."
+  default     = {}
+}

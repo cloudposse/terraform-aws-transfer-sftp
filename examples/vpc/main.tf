@@ -62,7 +62,7 @@ module "s3_bucket" {
 }
 
 
-module "example" {
+module "sftp" {
   source = "../.."
 
   eip_enabled            = true

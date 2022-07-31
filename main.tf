@@ -4,6 +4,15 @@ locals {
   is_vpc         = var.vpc_id != null
   user_names     = keys(var.sftp_users)
   user_names_map = { for idx, user in local.user_names : idx => user }
+
+  home_directory_mappings = merge({
+    default = {
+      entry  = "/"
+      target = "/${var.s3_bucket_name}/$${Transfer:UserName}"
+    },
+  }, var.home_directory_mappings)
+
+  home_directory = coalesce(var.home_directory, "/${var.s3_bucket_name}")
 }
 
 data "aws_s3_bucket" "landing" {
@@ -46,14 +55,14 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
-  home_directory      = !var.restricted_home ? "/${var.s3_bucket_name}" : null
+  home_directory      = !var.restricted_home ? local.home_directory : null
 
   dynamic "home_directory_mappings" {
-    for_each = var.restricted_home ? [1] : []
+    for_each = var.restricted_home ? local.home_directory_mappings : {}
 
     content {
-      entry  = "/"
-      target = "/${var.s3_bucket_name}/$${Transfer:UserName}"
+      entry  = lookup(home_directory_mappings.value, "entry")
+      target = lookup(home_directory_mappings.value, "target")
     }
   }
 
