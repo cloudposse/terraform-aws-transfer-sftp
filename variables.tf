@@ -5,13 +5,9 @@ variable "domain" {
 }
 
 variable "sftp_users" {
-  type = map(object({
-    user_name  = string,
-    public_key = string
-  }))
-
+  type        = any
   default     = {}
-  description = "List of SFTP usernames and public keys"
+  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` are required. The keys `s3_bucket_name` are optional."
 }
 
 variable "restricted_home" {
@@ -84,19 +80,4 @@ variable "eip_enabled" {
   type        = bool
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
-}
-
-variable "home_directory" {
-  type        = string
-  description = "The home directory if `restricted_home` is `true`. The default uses the format `/{var.s3_bucket_name}`."
-  default     = null
-}
-
-variable "home_directory_mappings" {
-  type = map(object({
-    entry  = string,
-    target = string
-  }))
-  description = "The home directory mappings if `restricted_home` is `true`. The default value can be overridden by using the key `default`."
-  default     = {}
 }

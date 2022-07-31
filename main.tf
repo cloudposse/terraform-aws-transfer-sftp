@@ -1,18 +1,12 @@
 locals {
   enabled = module.this.enabled
 
-  is_vpc         = var.vpc_id != null
-  user_names     = keys(var.sftp_users)
-  user_names_map = { for idx, user in local.user_names : idx => user }
-
-  home_directory_mappings = merge({
-    default = {
-      entry  = "/"
-      target = "/${var.s3_bucket_name}/$${Transfer:UserName}"
-    },
-  }, var.home_directory_mappings)
-
-  home_directory = coalesce(var.home_directory, "/${var.s3_bucket_name}")
+  is_vpc     = var.vpc_id != null
+  user_names = keys(var.sftp_users)
+  user_names_map = {
+    for idx, user in local.user_names :
+    idx => user
+  }
 }
 
 data "aws_s3_bucket" "landing" {
@@ -54,11 +48,18 @@ resource "aws_transfer_user" "default" {
 
   user_name = each.value.user_name
 
-  home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
-  home_directory      = !var.restricted_home ? local.home_directory : null
+  home_directory_type = lookup(each.value, "home_directory_type", null) != null ? lookup(each.value, "home_directory_type") : (var.restricted_home ? "LOGICAL" : "PATH")
+  home_directory      = !var.restricted_home ? "/${lookup(each.value, "s3_bucket_name", var.s3_bucket_name)}" : null
 
   dynamic "home_directory_mappings" {
-    for_each = var.restricted_home ? local.home_directory_mappings : {}
+    for_each = var.restricted_home ? merge({
+      default = {
+        entry = "/"
+        # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
+        # the value back to $${Tranfer:*} value
+        target = format("/%s/%s", lookup(each.value, "s3_bucket_name", var.s3_bucket_name), each.value.user_name)
+      }
+    }, lookup(each.value, "home_directory_mappings", {})) : {}
 
     content {
       entry  = lookup(home_directory_mappings.value, "entry")

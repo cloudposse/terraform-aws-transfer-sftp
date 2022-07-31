@@ -26,16 +26,13 @@ module "s3_bucket" {
 module "sftp" {
   source = "../.."
 
-  sftp_users = var.sftp_users
+  sftp_users = merge(var.sftp_users, {
+    kenny = merge({
+      s3_bucket_name = module.s3_bucket["extra"].bucket_id
+    }, var.sftp_users["kenny"])
+  })
 
   s3_bucket_name = module.s3_bucket["home"].bucket_id
-
-  home_directory_mappings = {
-    "extra" = {
-      entry  = "/"
-      target = "/${module.s3_bucket["extra"].bucket_id}/$${Transfer:UserName}"
-    }
-  }
 
   context = module.this.context
 }
