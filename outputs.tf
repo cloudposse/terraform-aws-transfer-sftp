@@ -15,5 +15,5 @@ output "elastic_ips" {
 
 output "s3_access_role_arns" {
   description = "Role ARNs for the S3 access"
-  value       = { for idx, user in local.user_names_map : user => aws_iam_role.s3_access_for_sftp_users[idx].arn }
+  value       = { for user, val in aws_iam_role.s3_access_for_sftp_users : user => val.arn }
 }
