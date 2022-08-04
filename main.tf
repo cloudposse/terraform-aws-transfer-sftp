@@ -1,9 +1,22 @@
 locals {
   enabled = module.this.enabled
 
-  is_vpc         = var.vpc_id != null
-  user_names     = keys(var.sftp_users)
-  user_names_map = { for idx, user in local.user_names : idx => user }
+  s3_arn_prefix = "arn:${one(data.aws_partition.default[*].partition)}:s3:::"
+
+  is_vpc = var.vpc_id != null
+
+  user_names = keys(var.sftp_users)
+
+  user_names_map = {
+    for user, val in var.sftp_users :
+    user => merge(val, {
+      s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
+    })
+  }
+}
+
+data "aws_partition" "default" {
+  count = local.enabled ? 1 : 0
 }
 
 data "aws_s3_bucket" "landing" {
@@ -41,19 +54,28 @@ resource "aws_transfer_user" "default" {
   for_each = local.enabled ? var.sftp_users : {}
 
   server_id = join("", aws_transfer_server.default[*].id)
-  role      = aws_iam_role.s3_access_for_sftp_users[index(local.user_names, each.value.user_name)].arn
+  role      = aws_iam_role.s3_access_for_sftp_users[each.value.user_name].arn
 
   user_name = each.value.user_name
 
-  home_directory_type = var.restricted_home ? "LOGICAL" : "PATH"
-  home_directory      = !var.restricted_home ? "/${var.s3_bucket_name}" : null
+  home_directory_type = lookup(each.value, "home_directory_type", null) != null ? lookup(each.value, "home_directory_type") : (var.restricted_home ? "LOGICAL" : "PATH")
+  home_directory      = lookup(each.value, "home_directory", null) != null ? lookup(each.value, "home_directory") : (!var.restricted_home ? "/${lookup(each.value, "s3_bucket_name", var.s3_bucket_name)}" : null)
 
   dynamic "home_directory_mappings" {
-    for_each = var.restricted_home ? [1] : []
+    for_each = var.restricted_home ? (
+      lookup(each.value, "home_directory_mappings", null) != null ? lookup(each.value, "home_directory_mappings") : [
+        {
+          entry = "/"
+          # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
+          # the value back to $${Tranfer:*} value
+          target = format("/%s/%s", lookup(each.value, "s3_bucket_name", var.s3_bucket_name), each.value.user_name)
+        }
+      ]
+    ) : toset([])
 
     content {
-      entry  = "/"
-      target = "/${var.s3_bucket_name}/$${Transfer:UserName}"
+      entry  = lookup(home_directory_mappings.value, "entry")
+      target = lookup(home_directory_mappings.value, "target")
     }
   }
 
@@ -77,6 +99,8 @@ resource "aws_eip" "sftp" {
   count = local.enabled && var.eip_enabled ? length(var.subnet_ids) : 0
 
   vpc = local.is_vpc
+
+  tags = module.this.tags
 }
 
 # Custom Domain
@@ -127,7 +151,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
-      join("", data.aws_s3_bucket.landing[*].arn)
+      each.value.s3_bucket_arn,
     ]
   }
 
@@ -146,7 +170,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     ]
 
     resources = [
-      var.restricted_home ? "${join("", data.aws_s3_bucket.landing[*].arn)}/${each.value}/*" : "${join("", data.aws_s3_bucket.landing[*].arn)}/*"
+      var.restricted_home ? "${each.value.s3_bucket_arn}/${each.value.user_name}/*" : "${each.value.s3_bucket_arn}/*"
     ]
   }
 }
@@ -175,7 +199,7 @@ module "iam_label" {
   source  = "cloudposse/label/null"
   version = "0.25.0"
 
-  attributes = ["transfer", "s3", each.value]
+  attributes = ["transfer", "s3", each.value.user_name]
 
   context = module.this.context
 }
@@ -183,17 +207,21 @@ module "iam_label" {
 resource "aws_iam_policy" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name   = module.iam_label[index(local.user_names, each.value)].id
-  policy = data.aws_iam_policy_document.s3_access_for_sftp_users[index(local.user_names, each.value)].json
+  name   = module.iam_label[each.value.user_name].id
+  policy = data.aws_iam_policy_document.s3_access_for_sftp_users[each.value.user_name].json
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_role" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name = module.iam_label[index(local.user_names, each.value)].id
+  name = module.iam_label[each.value.user_name].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
-  managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[index(local.user_names, each.value)].arn]
+  managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[each.value.user_name].arn]
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_policy" "logging" {
@@ -201,6 +229,8 @@ resource "aws_iam_policy" "logging" {
 
   name   = module.logging_label.id
   policy = join("", data.aws_iam_policy_document.logging[*].json)
+
+  tags = module.this.tags
 }
 
 resource "aws_iam_role" "logging" {
@@ -209,4 +239,6 @@ resource "aws_iam_role" "logging" {
   name                = module.logging_label.id
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
   managed_policy_arns = [join("", aws_iam_policy.logging[*].arn)]
+
+  tags = module.this.tags
 }
