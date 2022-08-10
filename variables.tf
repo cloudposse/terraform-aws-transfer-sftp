@@ -5,6 +5,11 @@ variable "aws_profile" {
   default     = ""
 }
 
+variable "route53enabled" {
+  type    = bool
+  default = true
+}
+
 variable "domain" {
   type        = string
   description = "Where your files are stored. S3 or EFS"

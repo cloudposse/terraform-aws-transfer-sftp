@@ -1,6 +1,5 @@
 locals {
   enabled = module.this.enabled
-
   is_vpc                 = var.vpc_id != null
   security_group_enabled = module.this.enabled && var.security_group_enabled
   user_names             = keys(var.sftp_users)
@@ -97,7 +96,7 @@ module "security_group" {
 
 # Custom Domain
 resource "aws_route53_record" "main" {
-  count = local.enabled && length(var.domain_name) > 0 && length(var.zone_id) > 0 ? 1 : 0
+  count = var.route53enabled ? 1 : 0
 
   name    = var.domain_name
   zone_id = var.zone_id
@@ -111,7 +110,7 @@ resource "aws_route53_record" "main" {
 
 # Add tags for DNS info and link in AWS console
 resource "null_resource" "transfer_server_dns_tags" {
-  count      = local.enabled && length(var.domain_name) > 0 && length(var.zone_id) > 0 ? 1 : 0
+  count      = var.route53enabled ? 1 : 0
   depends_on = [aws_transfer_server.default, aws_route53_record.main]
   triggers = {
     aws_profile         = var.aws_profile
