@@ -9,31 +9,31 @@ locals {
 
   sftp_users = { for user, val in var.sftp_users : user => merge(val,
     { public_key = flatten(tolist([val["public_key"]])) },
-  )
+    )
 
   }
 
   user_names_map = {
-  for user, val in local.sftp_users :
-  user => merge(val, {
-    s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
-  })
+    for user, val in local.sftp_users :
+    user => merge(val, {
+      s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
+    })
   }
   ssh_keys = flatten([
-  for user, val in local.sftp_users : [
-  for key in val["public_key"] : {
-    user_name  = val["user_name"]
-    public_key = key,
-    token      = "${val["user_name"]}#${key}"
-  }
-  ]
+    for user, val in local.sftp_users : [
+      for key in val["public_key"] : {
+        user_name  = val["user_name"]
+        public_key = key,
+        token      = "${val["user_name"]}#${key}"
+      }
+    ]
   ])
 
   ssh_keys_expanded = {
-  for v in local.ssh_keys : v["token"] => {
-    public_key = v["public_key"]
-    user_name  = v["user_name"]
-  }
+    for v in local.ssh_keys : v["token"] => {
+      public_key = v["public_key"]
+      user_name  = v["user_name"]
+    }
   }
 }
 data "aws_partition" "default" {
@@ -84,14 +84,14 @@ resource "aws_transfer_user" "default" {
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? (
-    lookup(each.value, "home_directory_mappings", null) != null ? lookup(each.value, "home_directory_mappings") : [
-      {
-        entry = "/"
-        # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
-        # the value back to $${Tranfer:*} value
-        target = format("/%s/%s", lookup(each.value, "s3_bucket_name", var.s3_bucket_name), each.value.user_name)
-      }
-    ]
+      lookup(each.value, "home_directory_mappings", null) != null ? lookup(each.value, "home_directory_mappings") : [
+        {
+          entry = "/"
+          # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
+          # the value back to $${Tranfer:*} value
+          target = format("/%s/%s", lookup(each.value, "s3_bucket_name", var.s3_bucket_name), each.value.user_name)
+        }
+      ]
     ) : toset([])
 
     content {
