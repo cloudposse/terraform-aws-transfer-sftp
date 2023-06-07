@@ -43,7 +43,7 @@ resource "aws_transfer_server" "default" {
       subnet_ids             = var.subnet_ids
       security_group_ids     = var.vpc_security_group_ids
       vpc_id                 = var.vpc_id
-      address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
+      address_allocation_ids = var.eip_enabled ? aws_eip.sftp[*].id : var.address_allocation_ids
     }
   }
 
