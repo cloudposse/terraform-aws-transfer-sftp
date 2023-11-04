@@ -5,7 +5,7 @@ output "id" {
 
 output "transfer_endpoint" {
   description = "The endpoint of the Transfer Server"
-  value       = module.this.enabled ? join("", aws_transfer_server.default.*.endpoint) : null
+  value       = module.this.enabled ? one(aws_transfer_server.default.*.endpoint) : null
 }
 
 output "elastic_ips" {
@@ -16,4 +16,14 @@ output "elastic_ips" {
 output "s3_access_role_arns" {
   description = "Role ARNs for the S3 access"
   value       = { for user, val in aws_iam_role.s3_access_for_sftp_users : user => val.arn }
+}
+
+output "arn" {
+  description = "ARN of the created Transfer Server"
+  value       = module.this.enabled ? one(aws_transfer_server.default.*.arn) : null
+}
+
+output "host_key_fingerprint" {
+  description = "The message-digest algorithm (MD5) hash of the Transfer Server's host key"
+  value       = module.this.enabled ? one(aws_transfer_server.default.*.host_key_fingerprint) : null
 }
