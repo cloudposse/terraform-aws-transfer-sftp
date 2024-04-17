@@ -17,3 +17,7 @@ output "s3_access_role_arns" {
   description = "Role ARNs for the S3 access"
   value       = { for user, val in aws_iam_role.s3_access_for_sftp_users : user => val.arn }
 }
+
+output "endpoint_details" {
+  value = module.this.enabled ? one(aws_transfer_server.default.*.endpoint_details) : null
+}
