@@ -219,9 +219,14 @@ resource "aws_iam_role" "s3_access_for_sftp_users" {
   name = module.iam_label[each.value.user_name].id
 
   assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
-  managed_policy_arns = [aws_iam_policy.s3_access_for_sftp_users[each.value.user_name].arn]
 
   tags = module.this.tags
+}
+
+resource "aws_iam_role_policy_attachment" "s3_access_for_sftp_users" {
+  for_each = aws_iam_policy.s3_access_for_sftp_users
+  role = aws_iam_role.s3_access_for_sftp_users[each.key].name
+  policy_arn = each.value.arn
 }
 
 resource "aws_iam_policy" "logging" {
