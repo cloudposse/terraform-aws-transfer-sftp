@@ -7,13 +7,7 @@ variable "domain" {
 variable "sftp_users" {
   type        = any
   default     = {}
-  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` are required. The keys `s3_bucket_name` are optional."
-}
-
-variable "restricted_home" {
-  type        = bool
-  description = "Restricts SFTP users so they only have access to their home directories."
-  default     = true
+  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` and `restricted_home` are required. The keys `s3_bucket_name` are optional."
 }
 
 variable "force_destroy" {
