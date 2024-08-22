@@ -4,27 +4,24 @@ locals {
   s3_arn_prefix = "arn:${one(data.aws_partition.default[*].partition)}:s3:::"
 
   is_vpc = var.vpc_id != null
-
-  user_names = keys(var.sftp_users)
-  sftp_users = { for user, val in var.sftp_users : user => merge(val,
-    { public_key = flatten(tolist([val["public_key"]])) })
-  }
+  # create map that include the data we need for creating sftp user, adding the s3 bucket to the sftp_users variable
   user_names_map = {
-    for user, val in local.sftp_users :
-    user => merge(val, {
+    for val in var.sftp_users :
+    val.user_name => merge(val, {
       s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
     })
   }
+  # create list of maps that holds the public keys of each user, in that way we can have more than one public key to user
   ssh_keys = flatten([
-    for user, val in local.sftp_users : [
-      for key in val["public_key"] : {
+    for val in var.sftp_users : [
+      for key in val["public_keys"] : {
         user_name  = val["user_name"]
         public_key = key,
         token      = "${val["user_name"]}#${key}"
       }
     ]
   ])
-
+  # create map of maps that holds the keys of each user, that way we iterate over this map and add all the keys that user needs
   ssh_keys_expanded = {
     for v in local.ssh_keys : v["token"] => {
       public_key = v["public_key"]
@@ -69,7 +66,7 @@ resource "aws_transfer_server" "default" {
 }
 
 resource "aws_transfer_user" "default" {
-  for_each = local.enabled ? local.sftp_users : {}
+  for_each = local.enabled ? local.user_names_map : {}
 
   server_id = join("", aws_transfer_server.default[*].id)
   role      = aws_iam_role.s3_access_for_sftp_users[each.value.user_name].arn
@@ -116,7 +113,7 @@ resource "aws_transfer_ssh_key" "default" {
 resource "aws_eip" "sftp" {
   count = local.enabled && var.eip_enabled ? length(var.subnet_ids) : 0
 
-  vpc = local.is_vpc
+  domain = local.is_vpc ? "vpc" : null
 
   tags = module.this.tags
 }
