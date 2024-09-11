@@ -9,7 +9,7 @@ provider "awsutils" {
 
 module "vpc" {
   source  = "cloudposse/vpc/aws"
-  version = "1.1.0"
+  version = "2.1.1"
 
   cidr_block = var.cidr_block
 
