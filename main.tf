@@ -17,7 +17,7 @@ locals {
       for key in val["public_keys"] : {
         user_name  = val["user_name"]
         public_key = key,
-        token      = "${val["user_name"]}#${key}"
+        token      = md5("${val["user_name"]}#${key}")
       }
     ]
   ])
