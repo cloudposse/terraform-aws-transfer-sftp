@@ -6,11 +6,11 @@ variable "domain" {
 
 variable "sftp_users" {
   type = list(
-      object({
-        user_name     = string
-        public_keys    = list(string)
-        s3_bucket_name = optional(string)
-      })
+    object({
+      user_name      = string
+      public_keys    = list(string)
+      s3_bucket_name = optional(string)
+    })
   )
   default     = []
   description = "List of SFTP usernames and public keys. The keys `user_name` and `public_keys` are required. The key `s3_bucket_name` is optional."
@@ -56,12 +56,6 @@ variable "subnet_ids" {
   type        = list(string)
   description = "A list of subnet IDs that are required to host your SFTP server endpoint in your VPC. This property can only be used when endpoint_type is set to VPC."
   default     = []
-}
-
-variable "vpc_endpoint_id" {
-  type        = string
-  description = "The ID of the VPC endpoint. This property can only be used when endpoint_type is set to VPC_ENDPOINT"
-  default     = null
 }
 
 variable "security_policy_name" {

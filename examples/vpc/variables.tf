@@ -7,15 +7,18 @@ variable "availability_zones" {
   description = "List of availability zones"
 }
 
-variable "cidr_block" {
+variable "ipv4_primary_cidr_block" {
   type        = string
   description = "CIDR for the VPC"
 }
 
 variable "sftp_users" {
-  type = map(object({
-    user_name  = string,
-    public_key = string
-  }))
-  description = "The value which will be passed to the example module"
+  type = list(
+    object({
+      user_name      = string
+      public_keys    = list(string)
+      s3_bucket_name = optional(string)
+    })
+  )
+  description = "List of SFTP usernames and public keys. The keys `user_name` and `public_keys` are required. The key `s3_bucket_name` is optional."
 }
