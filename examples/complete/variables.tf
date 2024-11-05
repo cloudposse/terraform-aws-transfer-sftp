@@ -1,5 +1,6 @@
 variable "region" {
-  type = string
+  type        = string
+  description = "The aws region the resources should be deployed"
 }
 
 variable "sftp_users" {
