@@ -1,5 +1,6 @@
 variable "region" {
   type = string
+  description = "The aws region the resources should be deployed"
 }
 
 variable "availability_zones" {
