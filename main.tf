@@ -8,7 +8,7 @@ locals {
   user_names_map = {
     for val in var.sftp_users :
     val.user_name => merge(val, {
-      s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
+      s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name", "")}" : one(data.aws_s3_bucket.landing[*].arn)
     })
   }
   # create list of maps that holds the public keys of each user, in that way we can have more than one public key to user
@@ -73,12 +73,12 @@ resource "aws_transfer_user" "default" {
 
   user_name = each.value.user_name
 
-  home_directory_type = lookup(each.value, "home_directory_type", null) != null ? lookup(each.value, "home_directory_type") : (var.restricted_home ? "LOGICAL" : "PATH")
-  home_directory      = lookup(each.value, "home_directory", null) != null ? lookup(each.value, "home_directory") : (!var.restricted_home ? "/${lookup(each.value, "s3_bucket_name", var.s3_bucket_name)}" : null)
+  home_directory_type = lookup(each.value, "home_directory_type", null) != null ? lookup(each.value, "home_directory_type", "") : (var.restricted_home ? "LOGICAL" : "PATH")
+  home_directory      = lookup(each.value, "home_directory", null) != null ? lookup(each.value, "home_directory", "") : (!var.restricted_home ? "/${lookup(each.value, "s3_bucket_name", var.s3_bucket_name)}" : null)
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? (
-      lookup(each.value, "home_directory_mappings", null) != null ? lookup(each.value, "home_directory_mappings") : [
+      lookup(each.value, "home_directory_mappings", null) != null ? lookup(each.value, "home_directory_mappings", null) : [
         {
           entry = "/"
           # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
@@ -89,8 +89,8 @@ resource "aws_transfer_user" "default" {
     ) : toset([])
 
     content {
-      entry  = lookup(home_directory_mappings.value, "entry")
-      target = lookup(home_directory_mappings.value, "target")
+      entry  = lookup(home_directory_mappings.value, "entry", null)
+      target = lookup(home_directory_mappings.value, "target", null)
     }
   }
 
