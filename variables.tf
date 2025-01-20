@@ -7,7 +7,7 @@ variable "domain" {
 variable "sftp_users" {
   type        = any
   default     = {}
-  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` are required. The keys `s3_bucket_name` are optional."
+  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` are required. The keys `s3_bucket_name` and `bucket_permissions` are optional."
 }
 
 variable "restricted_home" {

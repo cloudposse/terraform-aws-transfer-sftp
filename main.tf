@@ -159,7 +159,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
     sid    = "HomeDirObjectAccess"
     effect = "Allow"
 
-    actions = [
+    actions = lookup(each.value, "bucket_permissions", null) != null ? lookup(each.value, "bucket_permissions") : [
       "s3:PutObject",
       "s3:GetObject",
       "s3:DeleteObject",
