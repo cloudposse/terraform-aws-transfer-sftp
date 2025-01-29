@@ -57,7 +57,7 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = coalesce(each.value.home_directory_type, var.restricted_home ? "LOGICAL" : "PATH")
-  home_directory      = var.restricted_home ? null : (
+  home_directory = var.restricted_home ? null : (
     coalesce(
       each.value.home_directory,
       "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}"
