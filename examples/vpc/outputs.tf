@@ -1,9 +1,9 @@
 output "id" {
-  description = "The ID of the AWS Transfer Server instance"
+  description = "ID of the created example"
   value       = module.sftp.id
 }
 
 output "transfer_endpoint" {
-  description = "The endpoint URL of the AWS Transfer Server for SFTP connections"
+  description = "Endpoint for your SFTP connection"
   value       = module.sftp.transfer_endpoint
 }
