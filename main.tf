@@ -5,8 +5,6 @@ locals {
 
   is_vpc = var.vpc_id != null
 
-  user_names = keys(var.sftp_users)
-
   user_names_map = {
     for user, val in var.sftp_users :
     user => merge(val, {
@@ -43,7 +41,7 @@ resource "aws_transfer_server" "default" {
       subnet_ids             = var.subnet_ids
       security_group_ids     = var.vpc_security_group_ids
       vpc_id                 = var.vpc_id
-      address_allocation_ids = var.eip_enabled ? aws_eip.sftp.*.id : var.address_allocation_ids
+      address_allocation_ids = var.eip_enabled ? aws_eip.sftp[*].id : var.address_allocation_ids
     }
   }
 
