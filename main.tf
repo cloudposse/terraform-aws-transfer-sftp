@@ -57,18 +57,22 @@ resource "aws_transfer_user" "default" {
   user_name = each.value.user_name
 
   home_directory_type = coalesce(each.value.home_directory_type, var.restricted_home ? "LOGICAL" : "PATH")
-  home_directory      = coalesce(each.value.home_directory, !var.restricted_home ? "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}" : null)
+  home_directory      = var.restricted_home ? null : (
+    coalesce(
+      each.value.home_directory,
+      "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}"
+    )
+  )
 
   dynamic "home_directory_mappings" {
     for_each = var.restricted_home ? (
-      coalesce(each.value.home_directory_mappings, [
-        {
-          entry = "/"
-          # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
-          # the value back to $${Tranfer:*} value
-          target = format("/%s/%s", coalesce(each.value.s3_bucket_name, var.s3_bucket_name), each.value.user_name)
-        }
-      ])
+      coalesce(
+        each.value.home_directory_mappings,
+        [{
+          entry  = "/"
+          target = "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}/${each.value.user_name}"
+        }]
+      )
     ) : toset([])
 
     content {
