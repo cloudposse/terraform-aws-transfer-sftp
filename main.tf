@@ -8,7 +8,7 @@ locals {
   user_names_map = {
     for user, val in var.sftp_users :
     user => merge(val, {
-      s3_bucket_arn = coalesce("${local.s3_arn_prefix}${val.s3_bucket_name}", one(data.aws_s3_bucket.landing[*].arn))
+      s3_bucket_arn = val.s3_bucket_name != null ? "${local.s3_arn_prefix}${val.s3_bucket_name}" : one(data.aws_s3_bucket.landing[*].arn)
     })
   }
 }
