@@ -52,12 +52,6 @@ variable "subnet_ids" {
   default     = []
 }
 
-variable "vpc_endpoint_id" {
-  type        = string
-  description = "The ID of the VPC endpoint. This property can only be used when endpoint_type is set to VPC_ENDPOINT"
-  default     = null
-}
-
 variable "security_policy_name" {
   type        = string
   description = "Specifies the name of the security policy that is attached to the server. Possible values are TransferSecurityPolicy-2018-11, TransferSecurityPolicy-2020-06, and TransferSecurityPolicy-FIPS-2020-06. Default value is: TransferSecurityPolicy-2018-11."
