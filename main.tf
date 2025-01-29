@@ -69,7 +69,9 @@ resource "aws_transfer_user" "default" {
       coalesce(
         each.value.home_directory_mappings,
         [{
-          entry  = "/"
+          entry = "/"
+          # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
+          # the value back to $${Tranfer:*} value
           target = "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}/${each.value.user_name}"
         }]
       )
