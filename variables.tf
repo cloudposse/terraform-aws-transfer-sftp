@@ -5,9 +5,20 @@ variable "domain" {
 }
 
 variable "sftp_users" {
-  type        = any
+  type = map(object({
+    user_name           = string
+    public_key          = string
+    s3_bucket_name      = optional(string)
+    bucket_permissions  = optional(list(string))
+    home_directory_type = optional(string)
+    home_directory      = optional(string)
+    home_directory_mappings = optional(list(object({
+      entry  = string
+      target = string
+    })))
+  }))
   default     = {}
-  description = "List of SFTP usernames and public keys. The keys `user_name`, `public_key` are required. The keys `s3_bucket_name` are optional."
+  description = "Map of SFTP users and their configurations. Required: user_name, public_key. Optional: s3_bucket_name, bucket_permissions, home_directory_type, home_directory, home_directory_mappings"
 }
 
 variable "restricted_home" {
@@ -50,12 +61,6 @@ variable "subnet_ids" {
   type        = list(string)
   description = "A list of subnet IDs that are required to host your SFTP server endpoint in your VPC. This property can only be used when endpoint_type is set to VPC."
   default     = []
-}
-
-variable "vpc_endpoint_id" {
-  type        = string
-  description = "The ID of the VPC endpoint. This property can only be used when endpoint_type is set to VPC_ENDPOINT"
-  default     = null
 }
 
 variable "security_policy_name" {
