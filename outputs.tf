@@ -19,5 +19,6 @@ output "s3_access_role_arns" {
 }
 
 output "endpoint_details" {
-  value = module.this.enabled ? one(aws_transfer_server.default.*.endpoint_details) : null
+  value       = module.this.enabled ? one(aws_transfer_server.default.*.endpoint_details) : null
+  description = "Endpoints details"
 }
