@@ -171,8 +171,10 @@ Available targets:
 
 | Name | Description |
 |------|-------------|
+| <a name="output_arn"></a> [arn](#output\_arn) | ARN of the created Transfer Server |
 | <a name="output_elastic_ips"></a> [elastic\_ips](#output\_elastic\_ips) | Provisioned Elastic IPs |
 | <a name="output_endpoint_details"></a> [endpoint\_details](#output\_endpoint\_details) | Endpoints details |
+| <a name="output_host_key_fingerprint"></a> [host\_key\_fingerprint](#output\_host\_key\_fingerprint) | The message-digest algorithm (MD5) hash of the Transfer Server's host key |
 | <a name="output_id"></a> [id](#output\_id) | ID of the created example |
 | <a name="output_s3_access_role_arns"></a> [s3\_access\_role\_arns](#output\_s3\_access\_role\_arns) | Role ARNs for the S3 access |
 | <a name="output_transfer_endpoint"></a> [transfer\_endpoint](#output\_transfer\_endpoint) | The endpoint of the Transfer Server |
