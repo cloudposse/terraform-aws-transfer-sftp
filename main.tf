@@ -220,17 +220,17 @@ resource "aws_iam_policy" "s3_access_for_sftp_users" {
 resource "aws_iam_role" "s3_access_for_sftp_users" {
   for_each = local.enabled ? local.user_names_map : {}
 
-  name = module.iam_label[each.value.user_name].id
-  assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
+  name               = module.iam_label[each.value.user_name].id
+  assume_role_policy = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
 
   tags = module.this.tags
-  }
+}
 
 resource "aws_iam_role_policy_attachment" "s3_access_for_sftp_users" {
-    for_each = local.enabled ? local.user_names_map : {}
+  for_each = local.enabled ? local.user_names_map : {}
 
-    role       = aws_iam_role.s3_access_for_sftp_users[each.value.user_name].name
-    policy_arn = aws_iam_policy.s3_access_for_sftp_users[each.value.user_name].arn
+  role       = aws_iam_role.s3_access_for_sftp_users[each.value.user_name].name
+  policy_arn = aws_iam_policy.s3_access_for_sftp_users[each.value.user_name].arn
 }
 
 resource "aws_iam_policy" "logging" {
@@ -245,8 +245,8 @@ resource "aws_iam_policy" "logging" {
 resource "aws_iam_role" "logging" {
   count = local.enabled ? 1 : 0
 
-  name                = module.logging_label.id
-  assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
+  name               = module.logging_label.id
+  assume_role_policy = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
 
   tags = module.this.tags
 }
