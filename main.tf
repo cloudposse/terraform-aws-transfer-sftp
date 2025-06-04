@@ -10,6 +10,7 @@ locals {
   user_names_map = {
     for user, val in var.sftp_users :
     user => merge(val, {
+      home_dir_map = lookup(val, "home_directory_mappings", []) == null ? [] : lookup(val, "home_directory_mappings", [])
       s3_bucket_arn = lookup(val, "s3_bucket_name", null) != null ? "${local.s3_arn_prefix}${lookup(val, "s3_bucket_name")}" : one(data.aws_s3_bucket.landing[*].arn)
     })
   }
@@ -169,8 +170,14 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
       "s3:PutObjectACL"
     ]
 
-    resources = [
-      var.restricted_home ? "${each.value.s3_bucket_arn}/${each.value.user_name}/*" : "${each.value.s3_bucket_arn}/*"
+    resources = var.restricted_home ? (
+      length(each.value.home_dir_map) > 0 ?
+        [for hdm in each.value.home_dir_map :
+          startswith(hdm.target, "/${substr(each.value.s3_bucket_arn, length(local.s3_arn_prefix), length(each.value.s3_bucket_arn))}") ?
+        "${each.value.s3_bucket_arn}/${substr(hdm.target, length(each.value.s3_bucket_arn) - length(local.s3_arn_prefix) + 2, length(hdm.target))}/*" : "${each.value.s3_bucket_arn}/${hdm.target}/*"
+      ] : ["${each.value.s3_bucket_arn}/${each.value.user_name}/*"]
+    ) : [
+    "${each.value.s3_bucket_arn}/*"
     ]
   }
 }
@@ -218,14 +225,14 @@ resource "aws_iam_role" "s3_access_for_sftp_users" {
 
   name = module.iam_label[each.value.user_name].id
 
-  assume_role_policy  = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
+  assume_role_policy = join("", data.aws_iam_policy_document.assume_role_policy[*].json)
 
   tags = module.this.tags
 }
 
 resource "aws_iam_role_policy_attachment" "s3_access_for_sftp_users" {
-  for_each = aws_iam_policy.s3_access_for_sftp_users
-  role = aws_iam_role.s3_access_for_sftp_users[each.key].name
+  for_each   = aws_iam_policy.s3_access_for_sftp_users
+  role       = aws_iam_role.s3_access_for_sftp_users[each.key].name
   policy_arn = each.value.arn
 }
 
