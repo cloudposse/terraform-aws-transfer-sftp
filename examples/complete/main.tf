@@ -8,7 +8,7 @@ provider "awsutils" {
 
 module "s3_bucket" {
   source  = "cloudposse/s3-bucket/aws"
-  version = "3.1.1"
+  version = "4.10.0"
 
   for_each = toset(["home", "extra"])
 

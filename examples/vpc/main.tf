@@ -9,7 +9,7 @@ provider "awsutils" {
 
 module "vpc" {
   source  = "cloudposse/vpc/aws"
-  version = "2.1.0"
+  version = "2.3.0"
 
   ipv4_primary_cidr_block = var.cidr_block
 
@@ -18,7 +18,7 @@ module "vpc" {
 
 module "subnets" {
   source  = "cloudposse/dynamic-subnets/aws"
-  version = "2.3.0"
+  version = "2.4.2"
 
   availability_zones   = var.availability_zones
   vpc_id               = module.vpc.vpc_id
@@ -33,7 +33,7 @@ module "subnets" {
 
 module "security_group" {
   source  = "cloudposse/security-group/aws"
-  version = "2.0.0"
+  version = "2.2.0"
 
   vpc_id = module.vpc.vpc_id
   rules = [
@@ -51,7 +51,7 @@ module "security_group" {
 
 module "s3_bucket" {
   source             = "cloudposse/s3-bucket/aws"
-  version            = "3.1.1"
+  version            = "4.10.0"
   acl                = "private"
   enabled            = true
   user_enabled       = false
