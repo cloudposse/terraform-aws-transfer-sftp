@@ -86,3 +86,15 @@ variable "eip_enabled" {
   description = "Whether to provision and attach an Elastic IP to be used as the SFTP endpoint. An EIP will be provisioned per subnet."
   default     = false
 }
+
+variable "pre_authentication_login_banner" {
+  type        = string
+  description = "Specify a string to display when users connect to a server. This string is displayed before the user authenticates. The SFTP protocol does not support post-authentication display banners."
+  default     = null
+}
+
+variable "post_authentication_login_banner" {
+  type        = string
+  description = "Specify a string to display when users connect to a server. This string is displayed after the user authenticates. The SFTP protocol does not support post-authentication display banners."
+  default     = null
+}
