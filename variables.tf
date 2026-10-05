@@ -7,7 +7,7 @@ variable "domain" {
 variable "sftp_users" {
   type = map(object({
     user_name           = string
-    public_key          = string
+    public_keys         = list(string)
     s3_bucket_name      = optional(string)
     bucket_permissions  = optional(list(string))
     home_directory_type = optional(string)
@@ -18,7 +18,7 @@ variable "sftp_users" {
     })))
   }))
   default     = {}
-  description = "Map of SFTP users and their configurations. Required: user_name, public_key. Optional: s3_bucket_name, bucket_permissions, home_directory_type, home_directory, home_directory_mappings"
+  description = "Map of SFTP users and their configurations. Required: user_name, public_keys. Optional: s3_bucket_name, bucket_permissions, home_directory_type, home_directory, home_directory_mappings"
 }
 
 variable "restricted_home" {
