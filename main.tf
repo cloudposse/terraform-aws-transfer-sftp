@@ -11,6 +11,24 @@ locals {
       s3_bucket_arn = val.s3_bucket_name != null ? "${local.s3_arn_prefix}${val.s3_bucket_name}" : one(data.aws_s3_bucket.landing[*].arn)
     })
   }
+
+  # Keys from the deprecated `public_key` attribute stay at aws_transfer_ssh_key.default[<user key>],
+  # so existing callers see no changes in their plan.
+  public_key_users = {
+    for user, val in var.sftp_users : user => val if val.public_key != null
+  }
+
+  # Keys from `public_keys` are managed by aws_transfer_ssh_key.additional, one resource per key.
+  # Entries are keyed by "<user key>/md5(<public key>)": stable when other keys are added or removed,
+  # so only the changed key is recreated. A key also given in `public_key` is skipped to avoid a duplicate.
+  additional_ssh_keys = merge([
+    for user, val in var.sftp_users : {
+      for key in distinct(val.public_keys) : "${user}/${md5(key)}" => {
+        user_name  = val.user_name
+        public_key = key
+      } if key != val.public_key
+    }
+  ]...)
 }
 
 data "aws_partition" "default" {
@@ -89,7 +107,20 @@ resource "aws_transfer_user" "default" {
 }
 
 resource "aws_transfer_ssh_key" "default" {
-  for_each = local.enabled ? var.sftp_users : {}
+  for_each = local.enabled ? local.public_key_users : {}
+
+  server_id = join("", aws_transfer_server.default[*].id)
+
+  user_name = each.value.user_name
+  body      = each.value.public_key
+
+  depends_on = [
+    aws_transfer_user.default
+  ]
+}
+
+resource "aws_transfer_ssh_key" "additional" {
+  for_each = local.enabled ? local.additional_ssh_keys : {}
 
   server_id = join("", aws_transfer_server.default[*].id)
 

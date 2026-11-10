@@ -7,7 +7,8 @@ variable "domain" {
 variable "sftp_users" {
   type = map(object({
     user_name           = string
-    public_key          = string
+    public_key          = optional(string) # Deprecated: use public_keys
+    public_keys         = optional(list(string), [])
     s3_bucket_name      = optional(string)
     bucket_permissions  = optional(list(string))
     home_directory_type = optional(string)
@@ -18,7 +19,14 @@ variable "sftp_users" {
     })))
   }))
   default     = {}
-  description = "Map of SFTP users and their configurations. Required: user_name, public_key. Optional: s3_bucket_name, bucket_permissions, home_directory_type, home_directory, home_directory_mappings"
+  description = "Map of SFTP users and their configurations. Required: user_name, and at least one of public_keys or public_key. Optional: public_keys, public_key (deprecated, use public_keys), s3_bucket_name, bucket_permissions, home_directory_type, home_directory, home_directory_mappings"
+
+  validation {
+    condition = alltrue([
+      for user in var.sftp_users : user.public_key != null || length(user.public_keys) > 0
+    ])
+    error_message = "Each SFTP user must set at least one of public_keys or public_key."
+  }
 }
 
 variable "restricted_home" {
