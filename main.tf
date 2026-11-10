@@ -9,15 +9,12 @@ locals {
     for user, val in var.sftp_users :
     user => merge(val, {
       s3_bucket_arn = val.s3_bucket_name != null ? "${local.s3_arn_prefix}${val.s3_bucket_name}" : one(data.aws_s3_bucket.landing[*].arn)
-      # Mapping targets have the form "/<bucket>/<prefix>", stripped of the surrounding slashes
       mapping_targets = [
         for m in coalesce(val.home_directory_mappings, []) : trim(m.target, "/")
       ]
     })
   }
 
-  # When custom home_directory_mappings are given, S3 access is scoped to the mapping targets
-  # instead of the default "<bucket>/<user_name>" folder.
   user_s3_access = {
     for user, val in local.user_names_map :
     user => length(val.mapping_targets) > 0 ? {
@@ -75,12 +72,10 @@ resource "aws_transfer_user" "default" {
 
   user_name = each.value.user_name
 
-  # Custom home_directory_mappings always imply a LOGICAL home directory
   home_directory_type = coalesce(
     each.value.home_directory_type,
     var.restricted_home || each.value.home_directory_mappings != null ? "LOGICAL" : "PATH"
   )
-  # home_directory is only honored by AWS for PATH home directories
   home_directory = var.restricted_home || each.value.home_directory_mappings != null ? null : (
     coalesce(
       each.value.home_directory,
