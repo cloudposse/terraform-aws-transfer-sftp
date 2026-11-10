@@ -9,7 +9,24 @@ locals {
     for user, val in var.sftp_users :
     user => merge(val, {
       s3_bucket_arn = val.s3_bucket_name != null ? "${local.s3_arn_prefix}${val.s3_bucket_name}" : one(data.aws_s3_bucket.landing[*].arn)
+      # Mapping targets have the form "/<bucket>/<prefix>", stripped of the surrounding slashes
+      mapping_targets = [
+        for m in coalesce(val.home_directory_mappings, []) : trim(m.target, "/")
+      ]
     })
+  }
+
+  # When custom home_directory_mappings are given, S3 access is scoped to the mapping targets
+  # instead of the default "<bucket>/<user_name>" folder.
+  user_s3_access = {
+    for user, val in local.user_names_map :
+    user => length(val.mapping_targets) > 0 ? {
+      bucket_arns = distinct([for t in val.mapping_targets : "${local.s3_arn_prefix}${split("/", t)[0]}"])
+      object_arns = [for t in val.mapping_targets : "${local.s3_arn_prefix}${t}/*"]
+      } : {
+      bucket_arns = [val.s3_bucket_arn]
+      object_arns = [var.restricted_home ? "${val.s3_bucket_arn}/${val.user_name}/*" : "${val.s3_bucket_arn}/*"]
+    }
   }
 }
 
@@ -58,8 +75,13 @@ resource "aws_transfer_user" "default" {
 
   user_name = each.value.user_name
 
-  home_directory_type = coalesce(each.value.home_directory_type, var.restricted_home ? "LOGICAL" : "PATH")
-  home_directory = var.restricted_home ? null : (
+  # Custom home_directory_mappings always imply a LOGICAL home directory
+  home_directory_type = coalesce(
+    each.value.home_directory_type,
+    var.restricted_home || each.value.home_directory_mappings != null ? "LOGICAL" : "PATH"
+  )
+  # home_directory is only honored by AWS for PATH home directories
+  home_directory = var.restricted_home || each.value.home_directory_mappings != null ? null : (
     coalesce(
       each.value.home_directory,
       "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}"
@@ -67,17 +89,14 @@ resource "aws_transfer_user" "default" {
   )
 
   dynamic "home_directory_mappings" {
-    for_each = var.restricted_home ? (
-      coalesce(
-        each.value.home_directory_mappings,
-        [{
-          entry = "/"
-          # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
-          # the value back to $${Tranfer:*} value
-          target = "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}/${each.value.user_name}"
-        }]
-      )
-    ) : toset([])
+    for_each = each.value.home_directory_mappings != null ? each.value.home_directory_mappings : (
+      var.restricted_home ? [{
+        entry = "/"
+        # Specifically do not use $${Transfer:UserName} since subsequent terraform plan/applies will try to revert
+        # the value back to $${Tranfer:*} value
+        target = "/${coalesce(each.value.s3_bucket_name, var.s3_bucket_name)}/${each.value.user_name}"
+      }] : []
+    )
 
     content {
       entry  = home_directory_mappings.value.entry
@@ -156,9 +175,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
       "s3:ListBucket"
     ]
 
-    resources = [
-      each.value.s3_bucket_arn,
-    ]
+    resources = local.user_s3_access[each.key].bucket_arns
   }
 
   statement {
@@ -175,9 +192,7 @@ data "aws_iam_policy_document" "s3_access_for_sftp_users" {
       "s3:PutObjectACL"
     ])
 
-    resources = [
-      var.restricted_home ? "${each.value.s3_bucket_arn}/${each.value.user_name}/*" : "${each.value.s3_bucket_arn}/*"
-    ]
+    resources = local.user_s3_access[each.key].object_arns
   }
 }
 
