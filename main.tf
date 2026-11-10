@@ -12,15 +12,10 @@ locals {
     })
   }
 
-  # Keys from the deprecated `public_key` attribute stay at aws_transfer_ssh_key.default[<user key>],
-  # so existing callers see no changes in their plan.
   public_key_users = {
     for user, val in var.sftp_users : user => val if val.public_key != null
   }
 
-  # Keys from `public_keys` are managed by aws_transfer_ssh_key.additional, one resource per key.
-  # Entries are keyed by "<user key>/md5(<public key>)": stable when other keys are added or removed,
-  # so only the changed key is recreated. A key also given in `public_key` is skipped to avoid a duplicate.
   additional_ssh_keys = merge([
     for user, val in var.sftp_users : {
       for key in distinct(val.public_keys) : "${user}/${md5(key)}" => {
